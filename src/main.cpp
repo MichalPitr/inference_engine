@@ -9,7 +9,8 @@
 #include "onnx-ml.pb.h" // Include the generated header
 
 void gemm(const float *A, const float *B, float *output, const int n, const int m, const int k);
-void flatten(float *input, const std::vector<int> &input_dims, std::vector<int> &output_dims);
+onnx::TensorProto *flatten(std::vector<const onnx::TensorProto *> &inputs, const onnx::NodeProto &node);
+onnx::TensorProto* create_mock_input();
 float extract_const(onnx::NodeProto node);
 void printRawData(const onnx::TensorProto &tensor);
 int getFlattenAxis(const onnx::NodeProto &node);
@@ -86,23 +87,9 @@ int main(int argc, char **argv)
         weights[init.name()] = &init;
     }
 
-    onnx::TensorProto modelInput;
-    modelInput.set_name("onnx::Flatten_0"); // Set the input name (important for ONNX runtimes)
-
-    // Set data type to FLOAT
-    modelInput.set_data_type(onnx::TensorProto::FLOAT);
-
-    // Set dimensions to [1, 1, 28, 28]
-    modelInput.add_dims(1);
-    modelInput.add_dims(1);
-    modelInput.add_dims(28);
-    modelInput.add_dims(28);
-
-    // Fill with 1s (assuming FLOAT data type)
-    std::vector<float> data(1 * 1 * 28 * 28, 1.0f); // 784 elements
-    modelInput.set_raw_data(data.data(), data.size() * sizeof(float));
-
-    weights[modelInput.name()] = &modelInput;
+    // Make mock input.
+    onnx::TensorProto* modelInput = create_mock_input();
+    weights[modelInput->name()] = modelInput;
 
     // Iterate over nodes (topologically sorted)
     std::cout << "iterating over graph" << std::endl;
@@ -159,34 +146,8 @@ int main(int argc, char **argv)
         }
         else if (op_type == "Flatten")
         {
-            std::cout << "Op: Flatten" << std::endl;
-            // TODO: implement flatten op
-            assert(inputs.size() == 1);
-            assert(node.output_size() == 1);
-
-            onnx::TensorProto *flattened = new onnx::TensorProto;
-            // Set data type to FLOAT
-            flattened->set_data_type(onnx::TensorProto::FLOAT);
-
-            // Get output dims
-            const onnx::TensorProto* tensor = inputs[0];
-            int64_t axis = getFlattenAxis(node);
-            int64_t dimBefore = std::accumulate(tensor->dims().begin(), tensor->dims().begin() + axis, 1, std::multiplies<int64_t>());
-            int64_t dimAfter = std::accumulate(tensor->dims().begin() + axis, tensor->dims().end(), 1, std::multiplies<int64_t>());
-
-            // Set dimensions to [1, 1, 28, 28]
-            flattened->add_dims(dimBefore);
-            flattened->add_dims(dimAfter);
-
-            // Fill with 1s (assuming FLOAT data type)
-            
-            flattened->set_raw_data(tensor->raw_data());
-
-            std::string out_name = node.output()[0];
-            flattened->set_name(out_name.c_str()); // Set the input name (important for ONNX runtimes)
-            std::cout << "Flattened name: " << flattened->name() << std::endl;
-            weights[out_name] = flattened;
-            std::cout << "Flattened name: " << weights[out_name]->name() << std::endl;
+            onnx::TensorProto* output =  flatten(inputs, node);
+            weights[output->name()] = output;
         }
         else
         {
@@ -197,9 +158,52 @@ int main(int argc, char **argv)
     return 0;
 }
 
-void flatten(float *input, const std::vector<int> &input_dims, std::vector<int> &output_dims)
+onnx::TensorProto* create_mock_input()
 {
-    // Does nothing
+    onnx::TensorProto* modelInput = new onnx::TensorProto; 
+    modelInput->set_name("onnx::Flatten_0"); // Set the input name (important for ONNX runtimes)
+
+    // Set data type to FLOAT
+    modelInput->set_data_type(onnx::TensorProto::FLOAT);
+
+    // Set dimensions to [1, 1, 28, 28]
+    modelInput->add_dims(1);
+    modelInput->add_dims(1);
+    modelInput->add_dims(28);
+    modelInput->add_dims(28);
+
+    // Fill with 1s (assuming FLOAT data type)
+    std::vector<float> data(1 * 1 * 28 * 28, 1.0f); // 784 elements
+    modelInput->set_raw_data(data.data(), data.size() * sizeof(float));
+    return modelInput;
+}
+
+// flatten returns a new flattened version of node. Caller is responsible for managing memory.
+onnx::TensorProto* flatten(std::vector<const onnx::TensorProto *> &inputs, const onnx::NodeProto &node)
+{
+    std::cout << "Op: Flatten" << std::endl;
+    assert(inputs.size() == 1);
+
+    onnx::TensorProto *flattened = new onnx::TensorProto;
+    flattened->set_data_type(onnx::TensorProto::FLOAT);
+
+    // Get output dims
+    const onnx::TensorProto *tensor = inputs[0];
+    int64_t axis = getFlattenAxis(node);
+    int64_t dimBefore = std::accumulate(tensor->dims().begin(), tensor->dims().begin() + axis, 1, std::multiplies<int64_t>());
+    int64_t dimAfter = std::accumulate(tensor->dims().begin() + axis, tensor->dims().end(), 1, std::multiplies<int64_t>());
+
+    // Set dimensions.
+    flattened->add_dims(dimBefore);
+    flattened->add_dims(dimAfter);
+
+    flattened->set_raw_data(tensor->raw_data());
+
+    assert(node.output_size() == 1);
+    std::string out_name = node.output()[0];
+    flattened->set_name(out_name.c_str()); // Set the input name (important for ONNX runtimes)
+    std::cout << "Flattened name: " << flattened->name() << std::endl;
+    return flattened;
 }
 
 // gemm returns C = A * B
