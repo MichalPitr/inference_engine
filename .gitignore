@@ -1,1 +1,5 @@
 build
+.vscode
+models/bert.onnx
+models/mnist-*.onnx
+models/resnet10.onnx

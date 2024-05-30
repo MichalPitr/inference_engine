@@ -24,6 +24,8 @@ package onnx;
 //
 // The normative semantic specification of the ONNX IR is found in docs/IR.md.
 // Definitions of the built-in neural network operators may be found in docs/Operators.md.
+// Definitions of the built-in classical machine learning operators may be found in
+// docs/Operators-ml.md.
 
 // Notes
 //
@@ -748,6 +750,17 @@ message TypeProto {
   }
 
 
+  message Opaque {
+    // When missing, the domain is the same as the model's.
+    optional string domain = 1;
+    // The name is optional but significant when provided.
+    optional string name = 2;
+    // parameters that help defining the type
+    // DEPRECATED do not use.
+    // repeated TypeProto parameters = 3;
+  }
+
+
   oneof value {
     // The type of a tensor.
     Tensor tensor_type = 1;
@@ -769,6 +782,9 @@ message TypeProto {
 
     // Type of the sparse tensor
     SparseTensor sparse_tensor_type = 8;
+
+
+    Opaque opaque_type = 7;
 
   }
 

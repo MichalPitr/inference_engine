@@ -1,11 +1,11 @@
 cmake_minimum_required(VERSION 3.10)
-project(MyInferenceEngine LANGUAGES CXX CUDA)
+project(engine)
 
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_BUILD_TYPE Debug)
 
-# Set the source files
-set(SOURCES src/main.cpp)
+# Find Protobuf
+find_package(Protobuf REQUIRED)
+include_directories(${PROTOBUF_INCLUDE_DIRS})
 
-# Create the executable
-add_executable(inference_engine ${SOURCES})
+# Add subdirectories
+add_subdirectory(src)
