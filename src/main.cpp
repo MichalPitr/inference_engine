@@ -8,9 +8,9 @@
 
 #include "onnx-ml.pb.h" // Include the generated header
 
-void gemm(const float *A, const float *B, float *output, const int n, const int m, const int k);
+void gemm(const float *A, const float *B, const float *C, float *output, const int n, const int m, const int k);
 onnx::TensorProto *flatten(std::vector<const onnx::TensorProto *> &inputs, const onnx::NodeProto &node);
-onnx::TensorProto* create_mock_input();
+onnx::TensorProto *create_mock_input();
 float extract_const(onnx::NodeProto node);
 void printRawData(const onnx::TensorProto &tensor);
 int getFlattenAxis(const onnx::NodeProto &node);
@@ -88,7 +88,7 @@ int main(int argc, char **argv)
     }
 
     // Make mock input.
-    onnx::TensorProto* modelInput = create_mock_input();
+    onnx::TensorProto *modelInput = create_mock_input();
     weights[modelInput->name()] = modelInput;
 
     // Iterate over nodes (topologically sorted)
@@ -105,7 +105,7 @@ int main(int argc, char **argv)
             std::cout << pair.first << std::endl; // pair.first is the key
         }
 
-        std::vector<const onnx::TensorProto*> inputs;
+        std::vector<const onnx::TensorProto *> inputs;
         for (const std::string input_name : node.input())
         {
             std::cout << "Input: " << input_name << std::endl;
@@ -124,21 +124,71 @@ int main(int argc, char **argv)
         if (op_type == "Gemm")
         {
             // Convert inputs to raw arrays
-            std::cout << "Gemm(";
             assert(inputs.size() == 3);
 
-            for (const auto input : inputs)
-            {
-                std::cout << input->name() << ", ";
-                const std::string &rawData = input->raw_data();
-                const int numElements = rawData.size() / sizeof(float); // Calculate the number of floats
-                float *weightData = new float[numElements];
-                std::memcpy(weightData, rawData.data(), rawData.size());
-            }
-            std::cout << ");" << std::endl;
+            // A shape is (1, 784)
+            assert(inputs[0]->dims_size() == 2);
+            std::string A_raw = inputs[0]->raw_data();
+            int A_size = A_raw.size() / sizeof(float);
+            // dims(0) gives batch size, dims(1) starts with data shape.
+            assert(A_size == inputs[0]->dims(1));
+            std::cout << "A_raw.size(): " << A_raw.size() << std::endl;
+            std::cout << "A_size: " << A_size << std::endl;
+            float *A = new float[A_size];
+            std::memcpy(A, A_raw.data(), A_raw.size());
+
+            // B shape is (512, 784)
+            assert(inputs[1]->dims_size() == 2);
+            std::string B_raw = inputs[1]->raw_data();
+            int B_size = B_raw.size() / sizeof(float);
+            assert(B_size == inputs[1]->dims(0) * inputs[1]->dims(1));
+            std::cout << "B_raw.size(): " << B_raw.size() << std::endl;
+            std::cout << "B_size: " << B_size << std::endl;
+            float *B = new float[B_size];
+            std::memcpy(B, B_raw.data(), B_raw.size());
+
+            // C shape is (512)
+            assert(inputs[2]->dims_size() == 1);
+            std::string C_raw = inputs[2]->raw_data();
+            int C_size = C_raw.size() / sizeof(float);
+            assert(C_size == inputs[2]->dims(0));
+            std::cout << "C_raw.size(): " << C_raw.size() << std::endl;
+            std::cout << "C_size: " << C_size << std::endl;
+            float *C = new float[C_size];
+            std::memcpy(C, C_raw.data(), C_raw.size());
+
+            // out shape is (512)
+            float *out = new float[C_size];
+            std::cout << "out_size: " << sizeof(out) << std::endl;
+
             // Pass to gemm
             // Save output to node_outputs.
             // gemm();
+            // TODO: currently GEMM supports only A*B + C type of operations, A*B is assumed to be matrix * vector product.
+            // A = (1, 784)
+            // B = (512, 784)
+            // C = (512)
+            // has to be B * A + C
+            // Where n = 512, m = 784, k = 1
+
+            // Actual setting is A * B^T + C = (1, 784) * (784, 512) + (512) = (512) + (512) = (512)...
+            // A * B^T = B * A^T = (512, 784) * (784, 1) = (512, 1).
+            gemm(B, A, C, out, inputs[0]->dims(0), inputs[1]->dims(0), 1);
+
+            std::cout << "Op: Flatten" << std::endl;
+
+            onnx::TensorProto *result = new onnx::TensorProto;
+            result->set_data_type(onnx::TensorProto::FLOAT);
+
+            // Set dimensions.
+            result->add_dims(inputs[0]->dims(0));
+            result->add_dims(inputs[2]->dims(0));
+            result->set_raw_data(out, sizeof(float) * C_size);
+
+            assert(node.output_size() == 1);
+            std::string out_name = node.output()[0];
+            result->set_name(out_name.c_str()); // Set the input name (important for ONNX runtimes)
+            weights[out_name] = result;
         }
         else if (op_type == "Constant")
         {
@@ -146,7 +196,7 @@ int main(int argc, char **argv)
         }
         else if (op_type == "Flatten")
         {
-            onnx::TensorProto* output =  flatten(inputs, node);
+            onnx::TensorProto *output = flatten(inputs, node);
             weights[output->name()] = output;
         }
         else
@@ -158,9 +208,9 @@ int main(int argc, char **argv)
     return 0;
 }
 
-onnx::TensorProto* create_mock_input()
+onnx::TensorProto *create_mock_input()
 {
-    onnx::TensorProto* modelInput = new onnx::TensorProto; 
+    onnx::TensorProto *modelInput = new onnx::TensorProto;
     modelInput->set_name("onnx::Flatten_0"); // Set the input name (important for ONNX runtimes)
 
     // Set data type to FLOAT
@@ -179,7 +229,7 @@ onnx::TensorProto* create_mock_input()
 }
 
 // flatten returns a new flattened version of node. Caller is responsible for managing memory.
-onnx::TensorProto* flatten(std::vector<const onnx::TensorProto *> &inputs, const onnx::NodeProto &node)
+onnx::TensorProto *flatten(std::vector<const onnx::TensorProto *> &inputs, const onnx::NodeProto &node)
 {
     std::cout << "Op: Flatten" << std::endl;
     assert(inputs.size() == 1);
@@ -210,7 +260,7 @@ onnx::TensorProto* flatten(std::vector<const onnx::TensorProto *> &inputs, const
 // A is (n, m)
 // B is (m, k)
 // C is (n, k)
-void gemm(const float *A, const float *B, float *output, const int n, const int m, const int k)
+void gemm(const float *A, const float *B, const float *C, float *output, const int n, const int m, const int k)
 {
     for (int r = 0; r < m; ++r)
     {
@@ -223,6 +273,12 @@ void gemm(const float *A, const float *B, float *output, const int n, const int 
             }
             output[r * k + c] = res;
         }
+    }
+
+    assert(k == 1);
+    for (int i = 0; i < n; ++i)
+    {
+        output[i] += C[i];
     }
 }
 
