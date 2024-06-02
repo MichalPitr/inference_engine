@@ -11,9 +11,9 @@
 void gemm(const float *A, const float *B, const float *C, float *output, const int n, const int m, const int k);
 onnx::TensorProto *relu(std::vector<const onnx::TensorProto *> &inputs, const onnx::NodeProto &node);
 onnx::TensorProto *flatten(std::vector<const onnx::TensorProto *> &inputs, const onnx::NodeProto &node);
-onnx::TensorProto *create_mock_input();
+onnx::TensorProto *create_mock_input(std::string filename);
 float extract_const(onnx::NodeProto node);
-void printRawData(const onnx::TensorProto &tensor);
+void printRawTensorData(const onnx::TensorProto &tensor);
 int getFlattenAxis(const onnx::NodeProto &node);
 
 int main(int argc, char **argv)
@@ -61,6 +61,8 @@ int main(int argc, char **argv)
     {
         std::cout << "  - Name: " << output.name() << ", Type: " << output.type().denotation() << std::endl;
     }
+    assert(graph.output_size() == 1);
+    const std::string graph_output = graph.output()[0].name();
 
     // Print nodes (operators)
     std::cout << "\nNodes (Operators):\n";
@@ -89,7 +91,7 @@ int main(int argc, char **argv)
     }
 
     // Make mock input.
-    onnx::TensorProto *modelInput = create_mock_input();
+    onnx::TensorProto *modelInput = create_mock_input(inputFile);
     weights[modelInput->name()] = modelInput;
 
     // Iterate over nodes (topologically sorted)
@@ -98,7 +100,7 @@ int main(int argc, char **argv)
     std::cout << std::endl;
     for (const auto &node : graph.node())
     {
-        
+
         std::cout << "Node: " << node.name() << std::endl;
 
         std::string op_type = node.op_type();
@@ -129,7 +131,7 @@ int main(int argc, char **argv)
             std::string A_raw = inputs[0]->raw_data();
             int A_size = A_raw.size() / sizeof(float);
             std::cout << "inputs[0]->dims(1): " << inputs[0]->dims(1) << std::endl;
-            
+
             // dims(0) gives batch size, dims(1) starts with data shape.
             std::cout << "A_raw.size(): " << A_raw.size() << std::endl;
             std::cout << "A_size: " << A_size << std::endl;
@@ -161,18 +163,9 @@ int main(int argc, char **argv)
             float *out = new float[C_size];
             std::cout << "out_size: " << sizeof(out) << std::endl;
 
-            // Pass to gemm
-            // Save output to node_outputs.
-            // gemm();
-            // TODO: currently GEMM supports only A*B + C type of operations, A*B is assumed to be matrix * vector product.
-            // A = (1, 784)
-            // B = (512, 784)
-            // C = (512)
-            // has to be B * A + C
-            // Where n = 512, m = 784, k = 1
-
             // Actual setting is A * B^T + C = (1, 784) * (784, 512) + (512) = (512) + (512) = (512)...
             // A * B^T = B * A^T = (512, 784) * (784, 1) = (512, 1).
+            // Note: swapped B, A to simulate B^T. Need to generalize.
             gemm(B, A, C, out, inputs[0]->dims(0), inputs[1]->dims(0), 1);
             onnx::TensorProto *result = new onnx::TensorProto;
             result->set_data_type(onnx::TensorProto::FLOAT);
@@ -180,6 +173,13 @@ int main(int argc, char **argv)
             // Set dimensions.
             result->add_dims(inputs[0]->dims(0));
             result->add_dims(inputs[2]->dims(0));
+            std::cout << "out:";
+            for (int i = 0; i < C_size; ++i)
+            {
+                std::cout << ", " << out[i];
+            }
+            std::cout << std::endl;
+
             result->set_raw_data(out, sizeof(float) * C_size);
 
             assert(node.output_size() == 1);
@@ -207,12 +207,40 @@ int main(int argc, char **argv)
         }
         std::cout << std::endl;
     }
+    if (weights.find(graph_output) != weights.end())
+    {
+        std::cout << "Model output: " << std::endl;
+        const onnx::TensorProto *res = weights[graph_output];
+        const float *out = (const float *)res->raw_data().data();
+        for (int i = 0; i < res->dims(1); ++i)
+        {
+            std::cout << ", " << out[i];
+        }
+        std::cout << std::endl;
+    }
 
     return 0;
 }
 
-onnx::TensorProto *create_mock_input()
+onnx::TensorProto *create_mock_input(std::string filename)
 {
+    // 1. Open the file in binary mode
+    std::ifstream file(filename, std::ios::binary);
+
+    // Ensure the file is open and good
+    if (!file.is_open())
+    {
+        std::cerr << "Error opening file: " << filename << std::endl;
+        exit(1);
+    }
+
+    // Read the raw binary data into a vector of unsigned bytes
+    std::vector<unsigned char> rawData((std::istreambuf_iterator<char>(file)),
+                                       std::istreambuf_iterator<char>());
+    std::cout << "File size: " << rawData.size() << std::endl;
+    assert(rawData.size() == 784);
+
+
     onnx::TensorProto *modelInput = new onnx::TensorProto;
     modelInput->set_name("onnx::Flatten_0"); // Set the input name (important for ONNX runtimes)
 
@@ -227,7 +255,7 @@ onnx::TensorProto *create_mock_input()
 
     // Fill with 1s (assuming FLOAT data type)
     std::vector<float> data(1 * 1 * 28 * 28, 1.0f); // 784 elements
-    modelInput->set_raw_data(data.data(), data.size() * sizeof(float));
+    modelInput->set_raw_data(rawData.data(), rawData.size() * sizeof(float));
     return modelInput;
 }
 
@@ -282,12 +310,20 @@ onnx::TensorProto *relu(std::vector<const onnx::TensorProto *> &inputs, const on
 
     std::cout << "raw.size(): " << raw.size() << std::endl;
     std::memcpy(A, raw.data(), raw.size());
-
-    for (int i = 0; i < raw_size; ++i) {
-        if (A[i] < 0) {
+    for (int i = 0; i < raw_size; ++i)
+    {
+        if (A[i] < 0)
+        {
             A[i] = 0;
         }
     }
+
+    std::cout << "relu: ";
+    for (int i = 0; i < raw_size; ++i)
+    {
+        std::cout << ", " << A[i];
+    }
+    std::cout << std::endl;
 
     out->set_raw_data(A, raw_size);
     assert(node.output_size() == 1);
@@ -359,44 +395,34 @@ float extract_const(onnx::NodeProto node)
     exit(1);
 }
 
-void printRawData(const onnx::TensorProto &tensor)
+void printRawTensorData(const onnx::TensorProto &tensor)
 {
-    std::cout << "Raw data: ";
-
+    // Determine data type
     switch (tensor.data_type())
     {
-    case onnx::TensorProto::FLOAT:
+    case onnx::TensorProto_DataType_FLOAT:
+    {
+        const float *data = tensor.float_data().data();
         for (int i = 0; i < tensor.float_data_size(); ++i)
         {
-            std::cout << std::fixed << tensor.float_data(i) << " ";
+            std::cout << data[i] << " ";
         }
         break;
-
-    case onnx::TensorProto::INT32:
+    }
+    case onnx::TensorProto_DataType_INT32:
+    {
+        const int32_t *data = tensor.int32_data().data();
         for (int i = 0; i < tensor.int32_data_size(); ++i)
         {
-            std::cout << tensor.int32_data(i) << " ";
+            std::cout << data[i] << " ";
         }
         break;
-
-    case onnx::TensorProto::STRING:
-        for (int i = 0; i < tensor.string_data_size(); ++i)
-        {
-            std::cout << tensor.string_data(i) << " ";
-        }
-        break;
-
-    default:
-        // Print raw bytes in hexadecimal for other data types
-        const std::string &rawData = tensor.raw_data();
-        for (char byte : rawData)
-        {
-            std::cout << std::hex << std::setw(2) << std::setfill('0')
-                      << static_cast<int>(static_cast<unsigned char>(byte)) << " ";
-        }
     }
-
-    std::cout << std::endl; // Add a newline
+    // ... (Add cases for other data types: INT64, UINT8, etc.)
+    default:
+        std::cerr << "Unsupported data type: " << tensor.data_type() << std::endl;
+    }
+    std::cout << std::endl; // Newline after printing
 }
 
 int getFlattenAxis(const onnx::NodeProto &node)
@@ -415,7 +441,6 @@ int getFlattenAxis(const onnx::NodeProto &node)
             else
             {
                 std::cerr << "Error: Flatten node has 'axis' attribute, but it's not an integer." << std::endl;
-                // Handle this error as you see fit
             }
         }
     }
