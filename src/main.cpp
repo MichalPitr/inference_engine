@@ -7,11 +7,11 @@
 #include <numeric> // for std::accumulate
 
 #include "onnx-ml.pb.h" // Include the generated header
+#include "gemm.h"
 
-void gemm(const float *A, const float *B, const float *C, float *output, const int n, const int m, const int k);
 onnx::TensorProto *relu(std::vector<const onnx::TensorProto *> &inputs, const onnx::NodeProto &node);
 onnx::TensorProto *flatten(std::vector<const onnx::TensorProto *> &inputs, const onnx::NodeProto &node);
-onnx::TensorProto *create_mock_input(std::string filename);
+onnx::TensorProto *read_input(std::string filename);
 float extract_const(onnx::NodeProto node);
 void printRawTensorData(const onnx::TensorProto &tensor);
 int getFlattenAxis(const onnx::NodeProto &node);
@@ -91,7 +91,7 @@ int main(int argc, char **argv)
     }
 
     // Make mock input.
-    onnx::TensorProto *modelInput = create_mock_input(inputFile);
+    onnx::TensorProto *modelInput = read_input(inputFile);
     weights[modelInput->name()] = modelInput;
 
     // Iterate over nodes (topologically sorted)
@@ -133,7 +133,6 @@ int main(int argc, char **argv)
             std::cout << "inputs[0]->dims(1): " << inputs[0]->dims(1) << std::endl;
 
             // dims(0) gives batch size, dims(1) starts with data shape.
-            std::cout << "A_raw.size(): " << A_raw.size() << std::endl;
             std::cout << "A_size: " << A_size << std::endl;
             assert(A_size == inputs[0]->dims(1));
             float *A = new float[A_size];
@@ -144,7 +143,6 @@ int main(int argc, char **argv)
             std::string B_raw = inputs[1]->raw_data();
             int B_size = B_raw.size() / sizeof(float);
             assert(B_size == inputs[1]->dims(0) * inputs[1]->dims(1));
-            std::cout << "B_raw.size(): " << B_raw.size() << std::endl;
             std::cout << "B_size: " << B_size << std::endl;
             float *B = new float[B_size];
             std::memcpy(B, B_raw.data(), B_raw.size());
@@ -154,14 +152,12 @@ int main(int argc, char **argv)
             std::string C_raw = inputs[2]->raw_data();
             int C_size = C_raw.size() / sizeof(float);
             assert(C_size == inputs[2]->dims(0));
-            std::cout << "C_raw.size(): " << C_raw.size() << std::endl;
             std::cout << "C_size: " << C_size << std::endl;
             float *C = new float[C_size];
             std::memcpy(C, C_raw.data(), C_raw.size());
 
             // out shape is (512)
             float *out = new float[C_size];
-            std::cout << "out_size: " << sizeof(out) << std::endl;
 
             // Actual setting is A * B^T + C = (1, 784) * (784, 512) + (512) = (512) + (512) = (512)...
             // A * B^T = B * A^T = (512, 784) * (784, 1) = (512, 1).
@@ -222,27 +218,30 @@ int main(int argc, char **argv)
     return 0;
 }
 
-onnx::TensorProto *create_mock_input(std::string filename)
+onnx::TensorProto *read_input(std::string filename)
 {
-    // 1. Open the file in binary mode
     std::ifstream file(filename, std::ios::binary);
 
-    // Ensure the file is open and good
     if (!file.is_open())
     {
         std::cerr << "Error opening file: " << filename << std::endl;
         exit(1);
     }
 
-    // Read the raw binary data into a vector of unsigned bytes
-    std::vector<unsigned char> rawData((std::istreambuf_iterator<char>(file)),
-                                       std::istreambuf_iterator<char>());
-    std::cout << "File size: " << rawData.size() << std::endl;
-    assert(rawData.size() == 784);
+    std::vector<unsigned char> bytes(784); // Preallocate for 784 bytes
+    file.read(reinterpret_cast<char *>(bytes.data()), bytes.size());
 
+    std::vector<float> floatValues(bytes.size());
+    for (size_t i = 0; i < bytes.size(); ++i)
+    {
+        floatValues[i] = static_cast<float>(bytes[i]); // Direct conversion
+    }
+
+    std::cout << "File size: " << floatValues.size() << std::endl;
+    assert(floatValues.size() == 784);
 
     onnx::TensorProto *modelInput = new onnx::TensorProto;
-    modelInput->set_name("onnx::Flatten_0"); // Set the input name (important for ONNX runtimes)
+    modelInput->set_name("onnx::Flatten_0");
 
     // Set data type to FLOAT
     modelInput->set_data_type(onnx::TensorProto::FLOAT);
@@ -254,8 +253,18 @@ onnx::TensorProto *create_mock_input(std::string filename)
     modelInput->add_dims(28);
 
     // Fill with 1s (assuming FLOAT data type)
-    std::vector<float> data(1 * 1 * 28 * 28, 1.0f); // 784 elements
-    modelInput->set_raw_data(rawData.data(), rawData.size() * sizeof(float));
+    modelInput->set_raw_data(floatValues.data(), floatValues.size() * sizeof(float));
+
+    int float_size = modelInput->raw_data().size() / sizeof(float);
+    std::cout << "input float_size: " << float_size << std::endl;
+    std::cout << "input:";
+    const float *raw = (float *)modelInput->raw_data().data();
+    for (int i = 0; i < float_size; ++i)
+    {
+        std::cout << " " << raw[i];
+    }
+    std::cout << std::endl;
+
     return modelInput;
 }
 
@@ -279,6 +288,15 @@ onnx::TensorProto *flatten(std::vector<const onnx::TensorProto *> &inputs, const
     flattened->add_dims(dimAfter);
 
     flattened->set_raw_data(tensor->raw_data());
+    int float_size = flattened->raw_data().size() / sizeof(float);
+    std::cout << "flatten float_size: " << float_size << std::endl;
+    std::cout << "flatten out:";
+    const float *raw = (float *)flattened->raw_data().data();
+    for (int i = 0; i < float_size; ++i)
+    {
+        std::cout << " " << raw[i];
+    }
+    std::cout << std::endl;
 
     assert(node.output_size() == 1);
     std::string out_name = node.output()[0];
@@ -333,31 +351,7 @@ onnx::TensorProto *relu(std::vector<const onnx::TensorProto *> &inputs, const on
     return out;
 }
 
-// gemm returns C = A * B
-// A is (n, m)
-// B is (m, k)
-// C is (n, k)
-void gemm(const float *A, const float *B, const float *C, float *output, const int n, const int m, const int k)
-{
-    for (int r = 0; r < m; ++r)
-    {
-        for (int c = 0; c < k; ++c)
-        {
-            float res = 0;
-            for (int i = 0; i < n; ++i)
-            {
-                res += A[r * n + i] * B[i * k + c];
-            }
-            output[r * k + c] = res;
-        }
-    }
 
-    assert(k == 1);
-    for (int i = 0; i < n; ++i)
-    {
-        output[i] += C[i];
-    }
-}
 
 float extract_const(onnx::NodeProto node)
 {
