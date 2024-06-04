@@ -250,7 +250,6 @@ onnx::TensorProto* gemm(const std::vector<const onnx::TensorProto*>& inputs, con
     std::cout << "K: " << K << std::endl;
 
 
-
     // Create output tensor
     onnx::TensorProto* result = new onnx::TensorProto;
     result->set_data_type(onnx::TensorProto::FLOAT);

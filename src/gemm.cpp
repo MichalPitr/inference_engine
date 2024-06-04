@@ -22,8 +22,8 @@ void gemm(const float *A, const float *B, const float *C, float *out, const int 
     }
 
     assert(k == 1);
-    // for (int i = 0; i < n; ++i)
-    // {
-    //     out[i] += C[i];
-    // }
+    for (int i = 0; i < n; ++i)
+    {
+        out[i] += C[i];
+    }
 }
