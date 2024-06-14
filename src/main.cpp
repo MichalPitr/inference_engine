@@ -109,7 +109,7 @@ int main(int argc, char **argv)
         std::vector<const onnx::TensorProto *> inputs;
 
         std::cout << "Inputs: ";
-        for (const std::string input_name : node.input())
+        for (const auto &input_name : node.input())
         {
 
             if (weights.find(input_name) == weights.end())
@@ -281,7 +281,7 @@ onnx::TensorProto* gemm(const std::vector<const onnx::TensorProto*>& inputs, con
 
     // Print out values
     std::cout << "out: ";
-    for (int i = 0; i < outData.size(); ++i) {
+    for (std::size_t i = 0; i < outData.size(); ++i) {
         std::cout << outData[i] << ", ";
     }
     std::cout << std::endl;
