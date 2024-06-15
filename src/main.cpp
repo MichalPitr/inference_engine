@@ -8,15 +8,14 @@
 #include <span>
 
 #include "onnx-ml.pb.h" // Include the generated header
+#include "input_loader.h"
 #include "tensor.h"
 #include "gemm.h"
 
 Tensor *relu(std::vector<const Tensor*> &inputs);
 Tensor *flatten(std::vector<const Tensor*> &inputs, uint64_t axis);
-onnx::TensorProto *read_input(std::string filename);
 Tensor* gemm(std::vector<const Tensor*>& inputs);
 float extract_const(onnx::NodeProto node);
-void printRawTensorData(const onnx::TensorProto &tensor);
 int getFlattenAxis(const onnx::NodeProto &node);
 std::vector<float> reinterpret_string_to_float(const std::string& str);
 
@@ -98,11 +97,9 @@ int main(int argc, char **argv)
     }
 
     std::cout << "Reading input..." << std::endl;
+
     // Make mock input.
-    onnx::TensorProto *modelInput = read_input(inputFile);
-    std::vector<float> data = reinterpret_string_to_float(modelInput->raw_data());
-    std::vector<uint64_t> inputShape(modelInput->dims().begin(), modelInput->dims().end());
-    weights[modelInput->name()] = Tensor(data, inputShape, DataType::FLOAT32);
+    weights["onnx::Flatten_0"] = load_input(inputFile);
 
     // Iterate over nodes (topologically sorted)
     std::cout << "iterating over graph" << std::endl;
@@ -161,56 +158,6 @@ int main(int argc, char **argv)
     }
 
     return 0;
-}
-
-onnx::TensorProto *read_input(std::string filename)
-{
-    std::ifstream file(filename, std::ios::binary);
-
-    if (!file.is_open())
-    {
-        std::cerr << "Error opening file: " << filename << std::endl;
-        exit(1);
-    }
-
-    std::vector<unsigned char> bytes(784); // Preallocate for 784 bytes
-    file.read(reinterpret_cast<char *>(bytes.data()), bytes.size());
-
-    std::vector<float> floatValues(bytes.size());
-    for (size_t i = 0; i < bytes.size(); ++i)
-    {
-        floatValues[i] = static_cast<float>(bytes[i]); // Direct conversion and normalize.
-    }
-
-    std::cout << "File size: " << floatValues.size() << std::endl;
-    assert(floatValues.size() == 784);
-
-    onnx::TensorProto *modelInput = new onnx::TensorProto;
-    modelInput->set_name("onnx::Flatten_0");
-
-    // Set data type to FLOAT
-    modelInput->set_data_type(onnx::TensorProto::FLOAT);
-
-    // Set dimensions to [1, 1, 28, 28]
-    modelInput->add_dims(1);
-    modelInput->add_dims(1);
-    modelInput->add_dims(28);
-    modelInput->add_dims(28);
-
-    // Fill with 1s (assuming FLOAT data type)
-    modelInput->set_raw_data(floatValues.data(), floatValues.size() * sizeof(float));
-
-    int float_size = modelInput->raw_data().size() / sizeof(float);
-    std::cout << "input float_size: " << float_size << std::endl;
-    std::cout << "input:";
-    const float *raw = (float *)modelInput->raw_data().data();
-    for (int i = 0; i < float_size; ++i)
-    {
-        std::cout << " " << raw[i];
-    }
-    std::cout << std::endl;
-
-    return modelInput;
 }
 
 Tensor* gemm(std::vector<const Tensor*> &inputs) {
