@@ -11,10 +11,10 @@
 #include "tensor.h"
 #include "gemm.h"
 
-Tensor *relu(std::vector<const Tensor*> &inputs, const onnx::NodeProto &node);
-Tensor *flatten(std::vector<const Tensor*> &inputs, const onnx::NodeProto &node);
+Tensor *relu(std::vector<const Tensor*> &inputs);
+Tensor *flatten(std::vector<const Tensor*> &inputs, uint64_t axis);
 onnx::TensorProto *read_input(std::string filename);
-Tensor* gemm(std::vector<const Tensor*>& inputs, const onnx::NodeProto& node);
+Tensor* gemm(std::vector<const Tensor*>& inputs);
 float extract_const(onnx::NodeProto node);
 void printRawTensorData(const onnx::TensorProto &tensor);
 int getFlattenAxis(const onnx::NodeProto &node);
@@ -130,11 +130,12 @@ int main(int argc, char **argv)
 
         Tensor* output = nullptr;
         if (op_type == "Gemm") {
-            output = gemm(inputs, node);
+            output = gemm(inputs);
         } else if (op_type == "Flatten") {
-            output = flatten(inputs, node);
+            uint64_t axis = getFlattenAxis(node);
+            output = flatten(inputs, axis);
         } else if (op_type == "Relu") {
-            output = relu(inputs, node);
+            output = relu(inputs);
         } else {
             throw std::runtime_error("Op_type no supported: " + op_type);
         }
@@ -212,7 +213,7 @@ onnx::TensorProto *read_input(std::string filename)
     return modelInput;
 }
 
-Tensor* gemm(std::vector<const Tensor*> &inputs, const onnx::NodeProto& node) {
+Tensor* gemm(std::vector<const Tensor*> &inputs) {
     std::cout << "Op: Gemm" << std::endl;
 
     if (inputs.size() != 3) {
@@ -267,11 +268,6 @@ Tensor* gemm(std::vector<const Tensor*> &inputs, const onnx::NodeProto& node) {
 
     Tensor* result = new Tensor(outData, dims, DataType::FLOAT32);
 
-    // Set output name
-    if (node.output_size() != 1) {
-        throw std::runtime_error("Gemm operator expects exactly one output tensor.");
-    }
-
     // Print out values
     std::cout << "out: ";
     for (std::size_t i = 0; i < outData.size(); ++i) {
@@ -283,7 +279,7 @@ Tensor* gemm(std::vector<const Tensor*> &inputs, const onnx::NodeProto& node) {
 }
 
 // flatten returns a new flattened version of node. Caller is responsible for managing memory.
-Tensor *flatten(std::vector<const Tensor*> &inputs, const onnx::NodeProto &node)
+Tensor *flatten(std::vector<const Tensor*> &inputs, uint64_t axis)
 {
     std::cout << "Op: Flatten" << std::endl;
     if (inputs.size() != 1)
@@ -294,6 +290,7 @@ Tensor *flatten(std::vector<const Tensor*> &inputs, const onnx::NodeProto &node)
     const auto inputTensor = inputs[0];
 
     assert(inputTensor->getShape().size() == 4);
+    assert(axis <= inputTensor->getShape().size());
     
     // Mnist input only
     assert(inputTensor->getShape()[0] == 1); // batch size
@@ -301,7 +298,6 @@ Tensor *flatten(std::vector<const Tensor*> &inputs, const onnx::NodeProto &node)
     assert(inputTensor->getShape()[2] == 28); 
     assert(inputTensor->getShape()[3] == 28);
 
-    uint64_t axis = getFlattenAxis(node);
     uint64_t dimBefore = 1;
     for (std::size_t i = 0; i < axis; ++i) {
         dimBefore *= inputTensor->getShape()[i];
@@ -327,12 +323,11 @@ Tensor *flatten(std::vector<const Tensor*> &inputs, const onnx::NodeProto &node)
     std::cout << std::endl;
 
     // Set tensor name.
-    assert(node.output_size() == 1);
     return flat;
 }
 
 // relu
-Tensor* relu(std::vector<const Tensor*> &inputs, const onnx::NodeProto &node)
+Tensor* relu(std::vector<const Tensor*> &inputs)
 {
     std::cout << "Op: Relu" << std::endl;
     assert(inputs.size() == 1);
