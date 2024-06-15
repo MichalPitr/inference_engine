@@ -15,6 +15,15 @@ Tensor::Tensor(const std::vector<float>& data, const std::vector<uint64_t>& shap
         }
     }
 
+Tensor& Tensor::operator=(const Tensor& other) {
+    if (this != &other) { // Check for self-assignment
+        data_ = other.data_;
+        shape_ = other.shape_;
+        dataType_ = other.dataType_;
+    }
+    return *this;
+}
+
 const std::vector<float>& Tensor::getData() const {
     return data_;
 }

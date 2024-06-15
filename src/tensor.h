@@ -12,8 +12,19 @@ enum class DataType {
 
 class Tensor {
 public:
+    // Default constructor
+    Tensor() : data_{}, shape_{}, dataType_{DataType::UNKNOWN} {}
+
+    // Copy constructor - can be default:
+    Tensor(const Tensor&) = default;
+
+    // Move constructor - can be default:
+    Tensor(Tensor&&) = default;
+
     // Constructor 
     Tensor(const std::vector<float>& data, const std::vector<uint64_t>& shape, DataType dataType);
+
+    Tensor& operator=(const Tensor& other);
 
     // Accessors (const versions to prevent accidental modification)
     const std::vector<float>& getData() const;
