@@ -13,6 +13,7 @@ add_executable(${PROJECT_NAME}
     gemm.cpp
     tensor.cpp
     input_loader.cpp
+    operators.cpp
     ${PROTO_SRCS}
     ${PROTO_HDRS})
 
