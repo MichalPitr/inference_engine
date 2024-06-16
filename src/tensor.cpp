@@ -1,4 +1,5 @@
 #include <stdexcept>
+#include <cstdint> 
 #include "tensor.h"
 
 Tensor::Tensor(const std::vector<float>& data, const std::vector<uint64_t>& shape, DataType dataType)

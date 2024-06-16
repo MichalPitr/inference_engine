@@ -12,7 +12,7 @@ enum class DataType {
 
 class Tensor {
 public:
-    // Default constructor
+    // // Default constructor
     Tensor() : data_{}, shape_{}, dataType_{DataType::UNKNOWN} {}
 
     // Copy constructor - can be default:

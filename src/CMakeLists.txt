@@ -14,6 +14,7 @@ add_executable(${PROJECT_NAME}
     tensor.cpp
     input_loader.cpp
     operators.cpp
+    node.cpp
     ${PROTO_SRCS}
     ${PROTO_HDRS})
 
@@ -39,3 +40,8 @@ add_test(NAME gemm_test COMMAND gemm_test)
 add_executable(tensor_test test/tensor_test.cpp tensor.cpp)
 target_link_libraries(tensor_test GTest::GTest GTest::Main)
 add_test(NAME tensor_test COMMAND tensor_test)
+
+# node.cpp depends on tensor.cpp
+add_executable(node_test test/node_test.cpp node.cpp tensor.cpp)
+target_link_libraries(node_test GTest::GTest GTest::Main)
+add_test(NAME node_test COMMAND node_test)

@@ -157,7 +157,6 @@ int main(int argc, char **argv)
     return 0;
 }
 
-
 float extract_const(onnx::NodeProto node)
 {
     std::cout << "Const: " << node.output(0) << std::endl;
