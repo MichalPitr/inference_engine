@@ -1,29 +1,25 @@
 #include "node.h"
 #include "tensor.h"
 
-Node::Node(const std::string& name, OpType opType, Tensor* tensor)
-    : name(name), opType(opType), tensor(tensor) {}
+Node::Node(const std::string& name, OpType opType)
+    : name(name), opType(opType) {}
 
 const std::string& Node::getName() const {
     return name;
 }
 
-Tensor* Node::getTensor() const {
-    return tensor;
-}
-
-const std::vector<Node*>& Node::getInputs() const {
+const std::vector<std::string>& Node::getInputs() const {
     return inputs;
 }
 
-const std::vector<Node*>& Node::getOutputs() const {
+const std::vector<std::string>& Node::getOutputs() const {
     return outputs;
 }
 
-void Node::addInput(Node* node) {
-    inputs.push_back(node);
+void Node::addInput(std::string input) {
+    inputs.push_back(input);
 }
 
-void Node::addOutput(Node* node) {
-    outputs.push_back(node);
+void Node::addOutput(std::string output) {
+    outputs.push_back(output);
 }

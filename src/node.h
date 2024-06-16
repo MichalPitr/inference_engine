@@ -16,24 +16,22 @@ enum class OpType
 
 class Node {
 public:
-    Node(const std::string& name, const OpType optype, Tensor* tensor); // Constructor
+    Node(const std::string& name, const OpType optype); // Constructor
 
     // Accessors (getters)
     const std::string& getName() const;
-    Tensor* getTensor() const; 
-    const std::vector<Node*>& getInputs() const;
-    const std::vector<Node*>& getOutputs() const;
+    const std::vector<std::string>& getInputs() const;
+    const std::vector<std::string>& getOutputs() const;
 
     // Modifiers (setters/adders)
-    void addInput(Node* node);
-    void addOutput(Node* node);
+    void addInput(std::string input);
+    void addOutput(std::string output);
 
 private:
     std::string name;
     OpType opType;
-    Tensor* tensor; 
-    std::vector<Node*> inputs;
-    std::vector<Node*> outputs;
+    std::vector<std::string> inputs;
+    std::vector<std::string> outputs;
 };
 
 #endif
