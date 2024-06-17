@@ -83,7 +83,7 @@ int main(int argc, char **argv)
         std::cout << "]\n";
     }
 
-    std::map<std::string, Tensor> weights;
+    std::unordered_map<std::string, Tensor> weights;
     for (const auto &init : graph.initializer())
     {
         std::cout << "Adding initializer: " << init.name() << std::endl;

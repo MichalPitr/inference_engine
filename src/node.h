@@ -30,6 +30,7 @@ public:
 private:
     std::string name;
     OpType opType;
+    // Sorted list of inputs as expected the by the corresponding opType.
     std::vector<std::string> inputs;
     std::vector<std::string> outputs;
 };
