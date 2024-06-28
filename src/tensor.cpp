@@ -1,42 +1,31 @@
-#include <stdexcept>
-#include <cstdint> 
 #include "tensor.h"
 
-Tensor::Tensor(const std::vector<float>& data, const std::vector<uint64_t>& shape, DataType dataType)
-    : data_(data), shape_(shape), dataType_(dataType) {
-        if (dataType != DataType::FLOAT32) {
-            throw std::runtime_error("Unsupported data type in Tensor constructor.");
-        }
-        uint64_t expectedSize = 1;
-        for (uint64_t dim : shape) {
-            expectedSize *= dim;
-        }
-        if (data.size() != expectedSize) {
-            throw std::runtime_error("Data size does not match the expected size.");
-        }
-    }
+#include <stdexcept>
+#include <numeric>
 
-Tensor& Tensor::operator=(const Tensor& other) {
-    if (this != &other) { // Check for self-assignment
-        data_ = other.data_;
-        shape_ = other.shape_;
-        dataType_ = other.dataType_;
+template <typename T>
+Tensor<T>::Tensor(const std::vector<T>& data, const std::vector<uint64_t>& shape)
+    : data_(data), shape_(shape) {
+    
+    uint64_t expectedSize = std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<uint64_t>());
+    if (data_.size() != expectedSize) {
+        throw std::invalid_argument("Data size does not match the specified shape.");
     }
-    return *this;
 }
 
-const std::vector<float>& Tensor::getData() const {
+template <typename T>
+const std::vector<T>& Tensor<T>::data() const {
     return data_;
 }
 
-std::vector<uint64_t> Tensor::getShape() const {
+template <typename T>
+std::vector<uint64_t> Tensor<T>::shape() const {
     return shape_;
 }
 
-DataType Tensor::getDataType() const {
-    return dataType_;
-}
-
-std::size_t Tensor::getNumElements() const {
+template <typename T>
+uint64_t Tensor<T>::size() const {
     return data_.size();
 }
+
+template class Tensor<float>; 
