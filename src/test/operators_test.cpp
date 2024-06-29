@@ -17,8 +17,19 @@ TEST(OperatorsTest, flatten) {
     std::vector<uint64_t> expectedShape3{1, 8};
     EXPECT_EQ(expectedShape3, t4.shape());
 
-
     Tensor<float> t5 = flatten(t1, uint64_t{3});
     std::vector<uint64_t> expectedShape4{2, 4};
     EXPECT_EQ(expectedShape4, t5.shape());
+}
+
+TEST(OperatorsTest, relu) {
+    Tensor<float> t1 {{-1., 0, 1, -1, 1, -0.5, -0, 0.5}, {2, 4}};
+    auto t2 = relu(t1);
+    std::vector<float> expected{0, 0, 1, 0, 1, 0, 0, 0.5};
+    EXPECT_EQ(expected, t2.data());
+
+    Tensor<float> t3 {{1, 1, 1, 1}, {2, 2}};
+    auto t4 = relu(t3);
+    std::vector<float> expected2{1, 1, 1, 1};
+    EXPECT_EQ(expected2, t4.data());
 }

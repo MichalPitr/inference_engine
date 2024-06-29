@@ -32,7 +32,6 @@
 //     std::cout << "B.shape = (" << B.shape()[0] << ", " << B.shape()[1] << ")" << std::endl;
 //     std::cout << "C.shape = (" << C.shape()[0] << ")" << std::endl;
 
-
 //     // Calculate output dimensions
 //     uint64_t N = A.shape()[1];
 //     uint64_t M = B.shape()[0];
@@ -71,40 +70,36 @@
 
 // flatten returns a new flattened version of node. Caller is responsible for managing memory.
 template <typename T>
-Tensor<T> flatten(Tensor<T>& tensor, uint64_t axis)
+Tensor<T> flatten(Tensor<T> &tensor, uint64_t axis)
 {
     std::cout << "Op: Flatten" << std::endl;
-
-    // assert(tensor.shape().size() == 4);
     assert(axis <= tensor.shape().size());
-    
-    // Mnist input only
-    // assert(tensor.shape()[0] == 1); // batch size
-    // assert(tensor.shape()[1] == 1); // channels
-    // assert(tensor.shape()[2] == 28); 
-    // assert(tensor.shape()[3] == 28);
 
     uint64_t dimBefore = 1;
-    for (std::size_t i = 0; i < axis; ++i) {
+    for (std::size_t i = 0; i < axis; ++i)
+    {
         dimBefore *= tensor.shape()[i];
     }
     std::cout << "dim before: " << dimBefore << std::endl;
 
     uint64_t dimAfter = 1;
-    for (std::size_t i = axis; i < tensor.shape().size(); ++i) {
+    for (std::size_t i = axis; i < tensor.shape().size(); ++i)
+    {
         dimAfter *= tensor.shape()[i];
     }
     std::cout << "dim after: " << dimAfter << std::endl;
-    
-    // copy initialize. Would be better if we could modify it in place, but we 
+
+    // copy initialize. Would be better if we could modify it in place, but we
     // don't know if some other function relies on the input tensor. If we can do some dependency analysis, we could
     // probably optimize this.
     Tensor<T> flat(tensor);
-    for (auto s: flat.shape()) {
+    for (auto s : flat.shape())
+    {
         std::cout << "shape dim: " << s << '\n';
     }
     flat.setShape({dimBefore, dimAfter});
-    for (auto s: flat.shape()) {
+    for (auto s : flat.shape())
+    {
         std::cout << "shape after dim: " << s << '\n';
     }
     // Diagnostic printing
@@ -119,37 +114,30 @@ Tensor<T> flatten(Tensor<T>& tensor, uint64_t axis)
     return flat;
 }
 
-// // relu
-// Tensor* relu(std::vector<const Tensor*> &inputs)
-// {
-//     std::cout << "Op: Relu" << std::endl;
-//     assert(inputs.size() == 1);
-//     const auto &tensor = *inputs[0];
+template <typename T>
+Tensor<T> relu(Tensor<T>& tensor)
+{
+    std::cout << "Op: Relu" << std::endl;
 
-//     if (tensor.dataType() == DataType::FLOAT32 && !tensor.data().empty())
-//     {
-//         // Copy input data.
-//         std::vector<float> outputData(tensor.data());
-//         for (std::size_t i = 0; i < outputData.size(); ++i)
-//         {
-//             outputData[i] = std::max(0.0f, outputData[i]);
-//         }
+    // Copy input data.
+    Tensor<T> output(tensor);
+    T* raw = output.raw_data();
+    for (std::size_t i = 0; i < output.size(); ++i)
+    {
+        raw[i] = std::max(0.0f, raw[i]);
+    }
 
-//         // Print the modified output values (optional)
-//         std::cout << "ReLU: ";
-//         assert(tensor.shape().size() == 2);
-//         for (uint64_t i = 0; i < tensor.shape()[1]; ++i)
-//         { // Assuming the second dimension is the relevant one
-//             std::cout << outputData[i] << ", ";
-//         }
-//         std::cout << std::endl;
-//         return new Tensor(outputData, tensor.shape(), DataType::FLOAT32);
-//     }
-//     else
-//     {
-//         std::cerr << "Unsupported data type or empty raw data in ReLU" << std::endl;
-//         exit(1);
-//     }
-// }
+    // // Print the modified output values (optional)
+    // std::cout << "ReLU: ";
+    // assert(tensor.shape().size() == 2);
+    // for (uint64_t i = 0; i < tensor.shape()[1]; ++i)
+    // { // Assuming the second dimension is the relevant one
+    //     std::cout << outputData[i] << ", ";
+    // }
+    // std::cout << std::endl;
+    return output;
+}
 
-template Tensor<float> flatten<float>(Tensor<float>& tensor, uint64_t axis); 
+template Tensor<float> flatten<float>(Tensor<float> &tensor, uint64_t axis);
+template Tensor<float> relu<float>(Tensor<float> &tensor);
+
