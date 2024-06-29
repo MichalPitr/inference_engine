@@ -5,7 +5,10 @@ set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_BUILD_TYPE Debug)
 
 # Enable compiler warnings
-if (CMAKE_COMPILER_IS_GNUCC)
+if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+    # Clang-specific flags or configuration
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wpedantic")
+else()
     set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -Wall -Wno-deprecated-declarations -Wno-unused-function")
 endif()
 

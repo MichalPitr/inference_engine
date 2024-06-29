@@ -33,3 +33,30 @@ TEST(OperatorsTest, relu) {
     std::vector<float> expected2{1, 1, 1, 1};
     EXPECT_EQ(expected2, t4.data());
 }
+
+TEST(OperatorsTest, gemmMatrixVector) {
+    Tensor<float> A {{1, 2, 3, 4}, {2, 2}};
+    Tensor<float> B {{1, 1}, {2, 1}};
+    Tensor<float> bias {{1, 1}, {2, 1}};
+
+    auto res = gemm(A, B, bias);
+
+    std::vector<uint64_t> expectShape{2, 1};
+    EXPECT_EQ(expectShape, res.shape());
+    std::vector<float> expectData{4, 8};
+    EXPECT_EQ(expectData, res.data());
+}
+
+TEST(OperatorsTest, gemmMatrixMatrix) {
+    Tensor<float> A {{1, 2, 3, 4}, {2, 2}};
+    Tensor<float> B {{1, 1, 1, 1}, {2, 2}};
+    Tensor<float> bias {{1, 2}, {2, 1}};
+
+    auto res = gemm(A, B, bias);
+
+    std::vector<uint64_t> expectShape {2, 2};
+    EXPECT_EQ(expectShape, res.shape());
+
+    std::vector<float> expectData{4, 4, 9, 9};
+    EXPECT_EQ(expectData, res.data());
+}

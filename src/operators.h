@@ -9,7 +9,7 @@ Tensor<T> flatten(Tensor<T>& tensor, uint64_t axis);
 template <typename T>
 Tensor<T> relu(Tensor<T>& tensor);
 
-// Tensor gemm(std::vector<const Tensor>& inputs);
-
+template <typename T>
+Tensor<T> gemm(const Tensor<T>& A, const Tensor<T>& B, const Tensor<T>& bias);
 
 #endif // OPERATORS_H
