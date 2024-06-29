@@ -6,15 +6,17 @@
 #include <iomanip> // For std::hex
 #include <numeric> // for std::accumulate
 #include <span>
+#include <tuple>
 
 #include "onnx-ml.pb.h" // Include the generated header
 #include "input_loader.h"
 #include "tensor.h"
 #include "operators.h"
+#include "onnx_helper.h"
 
 float extract_const(onnx::NodeProto node);
 int getFlattenAxis(const onnx::NodeProto &node);
-std::vector<float> reinterpret_string_to_float(const std::string& str);
+std::vector<float> reinterpret_string_to_float(const std::string &str);
 
 int main(int argc, char **argv)
 {
@@ -82,7 +84,7 @@ int main(int argc, char **argv)
         }
         std::cout << "]\n";
     }
-    
+
     std::unordered_map<std::string, Tensor<float>> weights;
     for (const auto &init : graph.initializer())
     {
@@ -123,32 +125,56 @@ int main(int argc, char **argv)
         std::cout << std::endl;
 
         Tensor<float> output{};
-        if (op_type == "Gemm") {
+        if (op_type == "Gemm")
+        {
+            bool alphaOk, betaOk, transAOk, transBOk;
+            float alphaVal, betaVal;
+            int transAVal, transBVal;
+
+            std::tie(alphaOk, alphaVal) = getAttr<float>(node, "alpha");
+            std::tie(betaOk, betaVal) = getAttr<float>(node, "beta");
+            std::tie(transAOk, transAVal) = getAttr<int>(node, "transA");
+            std::tie(transBOk, transBVal) = getAttr<int>(node, "transB");
+            std::cout << "alpha: " << alphaOk << ", " << alphaVal << "\n";
+            std::cout << "beta: " << betaOk << ", " << betaVal << "\n";
+            std::cout << "transA: " << transAOk << ", " << transAVal << "\n";
+            std::cout << "transB: " << transBOk << ", " << transBVal << "\n";
+
             assert(inputs.size() == 3);
             Tensor<float> A = inputs[0];
             Tensor<float> B = inputs[1];
             Tensor<float> bias = inputs[2];
+            // TODO, add handling for attributes.
             output = gemm(A, B, bias);
-        } else if (op_type == "Flatten") {
+        }
+        else if (op_type == "Flatten")
+        {
             assert(inputs.size() == 1);
             Tensor<float> tensor = inputs[0];
             uint64_t axis = getFlattenAxis(node);
             output = flatten(tensor, axis);
-        } else if (op_type == "Relu") {
+        }
+        else if (op_type == "Relu")
+        {
             assert(inputs.size() == 1);
             Tensor<float> tensor = inputs[0];
             output = relu(tensor);
-        } else {
+        }
+        else
+        {
             throw std::runtime_error("Op_type no supported: " + op_type);
         }
 
-        if (output.size() != 0) {
+        if (output.size() != 0)
+        {
             weights[node.output(0)] = output;
-        } else {
+        }
+        else
+        {
             throw std::runtime_error("Got nullptr output after inference loop.");
         }
     }
-    
+
     if (weights.find(graph_output) != weights.end())
     {
         std::cout << "Model output: " << std::endl;
@@ -223,9 +249,11 @@ int getFlattenAxis(const onnx::NodeProto &node)
     return axis;
 }
 
-std::vector<float> reinterpret_string_to_float(const std::string& str) {
+std::vector<float> reinterpret_string_to_float(const std::string &str)
+{
     // Safety Check: Ensure size is a multiple of sizeof(float)
-    if (str.size() % sizeof(float) != 0) {
+    if (str.size() % sizeof(float) != 0)
+    {
         throw std::runtime_error("String size is not a multiple of sizeof(float)");
     }
 
@@ -234,7 +262,6 @@ std::vector<float> reinterpret_string_to_float(const std::string& str) {
 
     // Reinterpret the buffer's data as floats
     return std::vector<float>(
-        reinterpret_cast<const float*>(buffer.data()), 
-        reinterpret_cast<const float*>(buffer.data() + str.size())
-    );
+        reinterpret_cast<const float *>(buffer.data()),
+        reinterpret_cast<const float *>(buffer.data() + str.size()));
 }

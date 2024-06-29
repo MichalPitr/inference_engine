@@ -15,6 +15,7 @@ add_executable(${PROJECT_NAME}
     input_loader.cpp
     operators.cpp
     node.cpp
+    onnx_helper.cpp
     ${PROTO_SRCS}
     ${PROTO_HDRS})
 
