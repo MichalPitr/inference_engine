@@ -82,15 +82,15 @@ int main(int argc, char **argv)
         }
         std::cout << "]\n";
     }
-
-    std::unordered_map<std::string, Tensor> weights;
+    
+    std::unordered_map<std::string, Tensor<float>> weights;
     for (const auto &init : graph.initializer())
     {
         std::cout << "Adding initializer: " << init.name() << std::endl;
         std::cout << "float data size " << init.float_data().size() << std::endl;
         std::vector<float> data = reinterpret_string_to_float(init.raw_data());
         const std::vector<uint64_t> shape(init.dims().begin(), init.dims().end());
-        weights[init.name()] = Tensor(data, shape, DataType::FLOAT32);
+        weights[init.name()] = Tensor<float>{data, shape};
     }
 
     std::cout << "Reading input..." << std::endl;
@@ -108,7 +108,7 @@ int main(int argc, char **argv)
         std::cout << "Node: " << node.name() << std::endl;
 
         std::string op_type = node.op_type();
-        std::vector<const Tensor *> inputs;
+        std::vector<Tensor<float>> inputs{};
 
         std::cout << "Inputs: ";
         for (const auto &input_name : node.input())
@@ -118,25 +118,32 @@ int main(int argc, char **argv)
             {
                 throw std::runtime_error("Input not found: " + input_name);
             }
-            inputs.push_back(&weights[input_name]);
+            inputs.push_back(weights[input_name]);
         }
         std::cout << std::endl;
 
-        Tensor* output = nullptr;
+        Tensor<float> output{};
         if (op_type == "Gemm") {
-            output = gemm(inputs);
+            assert(inputs.size() == 3);
+            Tensor<float> A = inputs[0];
+            Tensor<float> B = inputs[1];
+            Tensor<float> bias = inputs[2];
+            output = gemm(A, B, bias);
         } else if (op_type == "Flatten") {
+            assert(inputs.size() == 1);
+            Tensor<float> tensor = inputs[0];
             uint64_t axis = getFlattenAxis(node);
-            output = flatten(inputs, axis);
+            output = flatten(tensor, axis);
         } else if (op_type == "Relu") {
-            output = relu(inputs);
+            assert(inputs.size() == 1);
+            Tensor<float> tensor = inputs[0];
+            output = relu(tensor);
         } else {
             throw std::runtime_error("Op_type no supported: " + op_type);
         }
 
-        if (output != nullptr) {
-            weights[node.output(0)] = *output;
-            delete output;
+        if (output.size() != 0) {
+            weights[node.output(0)] = output;
         } else {
             throw std::runtime_error("Got nullptr output after inference loop.");
         }
@@ -145,9 +152,9 @@ int main(int argc, char **argv)
     if (weights.find(graph_output) != weights.end())
     {
         std::cout << "Model output: " << std::endl;
-        Tensor res = weights[graph_output];
-        std::vector<float> out = res.getData();
-        for (uint64_t i = 0; i < res.getNumElements(); ++i)
+        Tensor<float> res = weights[graph_output];
+        std::vector<float> out = res.data();
+        for (uint64_t i = 0; i < res.size(); ++i)
         {
             std::cout << ", " << out[i];
         }

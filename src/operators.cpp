@@ -11,14 +11,23 @@ Tensor<T> gemm(const Tensor<T>& A, const Tensor<T>& B, const Tensor<T>& bias) {
     std::cout << "Op: Gemm" << std::endl;
 
     // Input Validation
-    if (A.shape().size() != 2 || B.shape().size() != 2 || bias.shape().size() != 2) {
+    if (A.shape().size() != 2 || B.shape().size() != 2 || bias.shape().size() == 0) {
         std::cerr << "A dims: " << A.shape().size() << " B dims " << B.shape().size() << " C dims " << bias.shape().size() << std::endl;
+        std::cerr << "A.shape: " << A.stringShape() << std::endl;
+        std::cerr << "B.shape: " << B.stringShape() << std::endl;
+        std::cerr << "bias.shape: " << bias.stringShape() << std::endl;
+
         throw std::invalid_argument("Invalid dimensions for Gemm inputs.");
     }
     if (A.shape()[1] != B.shape()[0]) {
+        std::cerr << "A.shape: " << A.stringShape() << std::endl;
+        std::cerr << "B.shape: " << B.stringShape() << std::endl;
         throw std::invalid_argument("Matrix dimensions are not compatible for multiplication in Gemm.");
     }
     if (B.shape()[0] != bias.shape()[0]) {
+        std::cerr << "A.shape: " << A.stringShape() << std::endl;
+        std::cerr << "B.shape: " << B.stringShape() << std::endl;
+        std::cerr << "bias.shape: " << bias.stringShape() << std::endl;
         throw std::invalid_argument("Bias dimensions are not compatible with the result in Gemm.");
     }
 

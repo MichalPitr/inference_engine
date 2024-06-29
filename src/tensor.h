@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <cstdint>
+#include <string>
 
 template <typename T>
 class Tensor {
@@ -23,6 +24,7 @@ public:
 
     std::vector<uint64_t> shape() const;
     void setShape(const std::vector<uint64_t>& shape);
+    std::string stringShape() const;
     
     uint64_t size() const;
 

@@ -2,6 +2,7 @@
 
 #include <stdexcept>
 #include <numeric>
+#include <iostream>
 
 template <typename T>
 Tensor<T>::Tensor(const std::vector<T>& data, const std::vector<uint64_t>& shape)
@@ -35,13 +36,24 @@ std::vector<uint64_t> Tensor<T>::shape() const {
 }
 
 template <typename T>
+void Tensor<T>::setShape(const std::vector<uint64_t>& shape) {
+    shape_ = shape;
+}
+
+template <typename T>
+std::string Tensor<T>::stringShape() const {
+    std::string msg {"("};
+    for (std::size_t i {0}; i < shape().size()-1; ++i) {
+        msg += std::to_string(shape()[i]) + ", "; 
+    }
+    msg += std::to_string(shape()[shape().size()-1]) + ")";
+    return msg;
+}
+
+template <typename T>
 uint64_t Tensor<T>::size() const {
     return data_.size();
 }
 
-template <typename T>
-void Tensor<T>::setShape(const std::vector<uint64_t>& shape) {
-    shape_ = shape;
-}
 
 template class Tensor<float>;
