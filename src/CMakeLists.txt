@@ -45,3 +45,8 @@ add_test(NAME tensor_test COMMAND tensor_test)
 add_executable(node_test test/node_test.cpp node.cpp tensor.cpp)
 target_link_libraries(node_test GTest::GTest GTest::Main)
 add_test(NAME node_test COMMAND node_test)
+
+# operators.cpp depends on tensor.cpp
+add_executable(operators_test test/operators_test.cpp operators.cpp tensor.cpp)
+target_link_libraries(operators_test GTest::GTest GTest::Main)
+add_test(NAME operators_test COMMAND operators_test)

@@ -33,4 +33,9 @@ uint64_t Tensor<T>::size() const {
     return data_.size();
 }
 
+template <typename T>
+void Tensor<T>::setShape(const std::vector<uint64_t>& shape) {
+    shape_ = shape;
+}
+
 template class Tensor<float>;

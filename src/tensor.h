@@ -21,6 +21,8 @@ public:
     T* raw_data();
     std::vector<uint64_t> shape() const;
     uint64_t size() const;
+    
+    void setShape(const std::vector<uint64_t>& shape);
 
 private:
     std::vector<T> data_;
