@@ -2,18 +2,23 @@
 #define TENSOR_H
 
 #include <vector>
-#include <cstdint> // For uint64_t (used for dimensions)
+#include <cstdint>
 
 template <typename T>
 class Tensor {
 public:
-    // // Default constructor
+    // Default constructors
     Tensor() = default;
+    Tensor(Tensor&&) = default; // move
+    Tensor& operator=(Tensor&&) = default;
+    Tensor(const Tensor&) = default; // copy
+    Tensor& operator=(Tensor const&) = default;
+    ~Tensor() = default;
 
     Tensor(const std::vector<T>& data, const std::vector<uint64_t>& shape);
 
-    // Accessors (const versions to prevent accidental modification)
     const std::vector<T>& data() const;
+    T* raw_data();
     std::vector<uint64_t> shape() const;
     uint64_t size() const;
 

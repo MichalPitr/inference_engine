@@ -3,8 +3,6 @@
 
 TEST(NodeTest, Constructor) {
     // Tensor setup
-    std::vector<float> data = {1.0f, 2.0f, 3.0f, 4.0f};
-    std::vector<uint64_t> shape = {2, 2};
     Node node("relu1", OpType::Relu);
     std::vector<std::string> inputs {"A", "B", "bias"};
     node.addInput(inputs[0]);

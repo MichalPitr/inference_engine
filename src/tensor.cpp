@@ -19,6 +19,11 @@ const std::vector<T>& Tensor<T>::data() const {
 }
 
 template <typename T>
+T* Tensor<T>::raw_data() {
+    return data_.data();
+}
+
+template <typename T>
 std::vector<uint64_t> Tensor<T>::shape() const {
     return shape_;
 }
@@ -28,4 +33,4 @@ uint64_t Tensor<T>::size() const {
     return data_.size();
 }
 
-template class Tensor<float>; 
+template class Tensor<float>;
