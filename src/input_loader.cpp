@@ -8,6 +8,7 @@
 
 Tensor<float> load_input(const std::string& filename)
 {
+    std::cout << "Model input file: " << filename << std::endl;
     std::ifstream file(filename, std::ios::binary);
     if (!file.is_open()) {
         throw std::runtime_error("Error opening file: " + filename);

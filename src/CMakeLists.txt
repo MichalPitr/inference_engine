@@ -16,6 +16,8 @@ add_executable(${PROJECT_NAME}
     operators.cpp
     node.cpp
     onnx_helper.cpp
+    model_loader.cpp
+    inference_engine.cpp
     ${PROTO_SRCS}
     ${PROTO_HDRS})
 
