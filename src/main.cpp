@@ -155,7 +155,10 @@ int main(int argc, char **argv)
         {
             assert(inputs.size() == 1);
             Tensor<float> tensor = inputs[0];
-            uint64_t axis = getFlattenAxis(node);
+            bool axisOk; 
+            int axis;
+            std::tie(axisOk, axis) = getAttr<int>(node, "axis");
+            if (!axisOk) throw std::runtime_error("Axis missing for flatten operation");
             output = flatten(tensor, axis);
         }
         else if (op_type == "Relu")
@@ -228,29 +231,6 @@ float extract_const(onnx::NodeProto node)
     }
     std::cerr << "Unimplemented handling for multi-dim consts" << std::endl;
     exit(1);
-}
-
-int getFlattenAxis(const onnx::NodeProto &node)
-{
-    int axis = 1; // Default value (as per ONNX specification)
-
-    for (const auto &attr : node.attribute())
-    {
-        if (attr.name() == "axis")
-        {
-            if (attr.has_i())
-            {
-                axis = attr.i(); // Get the 'axis' value
-                break;
-            }
-            else
-            {
-                std::cerr << "Error: Flatten node has 'axis' attribute, but it's not an integer." << std::endl;
-            }
-        }
-    }
-
-    return axis;
 }
 
 std::vector<float> reinterpret_string_to_float(const std::string &str)
