@@ -5,7 +5,6 @@
 
 #include "onnx-ml.pb.h"
 #include "tensor.h"
-#include "operators.h"
 
 class InferenceEngine
 {

@@ -1,7 +1,6 @@
 #include "model_loader.h"
 
 #include <fstream>
-#include <exception>
 #include <memory>
 
 std::vector<float> reinterpret_string_to_float(const std::string &str);

@@ -3,6 +3,7 @@
 #include <stdexcept>
 #include <iostream>
 
+#include "operators.h"
 #include "onnx_helper.h"
 
 InferenceEngine::InferenceEngine(const onnx::GraphProto &graph,

@@ -2,7 +2,6 @@
 
 #include <stdexcept>
 #include <numeric>
-#include <iostream>
 
 template <typename T>
 Tensor<T>::Tensor(const std::vector<T>& data, const std::vector<uint64_t>& shape)
