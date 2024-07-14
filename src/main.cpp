@@ -29,7 +29,6 @@ int main(int argc, char **argv)
     std::string modelFile = argv[1];
     std::string inputFile = argv[2];
 
-    // 1. Model Loading & Initialization
     ModelLoader loader;
     std::unique_ptr<InferenceEngine> engine = loader.load(modelFile);
 

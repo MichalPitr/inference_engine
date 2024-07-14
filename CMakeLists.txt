@@ -1,20 +1,21 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.22)
 project(engine)
 
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_BUILD_TYPE Debug)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
 # Enable compiler warnings
-if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-    # Clang-specific flags or configuration
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wpedantic")
-else()
-    set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -Wall -Wno-deprecated-declarations -Wno-unused-function")
-endif()
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wpedantic -Wno-deprecated-declarations -Wno-unused-function")
 
 # Find Protobuf
 find_package(Protobuf REQUIRED)
+find_package(benchmark REQUIRED)
+find_package(GTest REQUIRED)
+
 include_directories(${PROTOBUF_INCLUDE_DIRS})
+
 
 # Add subdirectories
 add_subdirectory(src)
+add_subdirectory(src/test)

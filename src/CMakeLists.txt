@@ -2,13 +2,8 @@
 # Generate the .h and .cxx files
 PROTOBUF_GENERATE_CPP(PROTO_SRCS PROTO_HDRS onnx-ml.proto)
 
-# Print path to generated files
-message ("PROTO_SRCS = ${PROTO_SRCS}")
-message ("PROTO_HDRS = ${PROTO_HDRS}")
-
-
 # Add an executable
-add_executable(${PROJECT_NAME}
+add_library(engine_lib
     main.cpp
     gemm.cpp
     tensor.cpp
@@ -21,35 +16,12 @@ add_executable(${PROJECT_NAME}
     ${PROTO_SRCS}
     ${PROTO_HDRS})
 
-target_include_directories(${PROJECT_NAME}
-    PUBLIC
+target_include_directories(engine_lib PUBLIC
     ${PROTOBUF_INCLUDE_DIRS}
-    ${CMAKE_CURRENT_BINARY_DIR}
-)
+    ${CMAKE_CURRENT_BINARY_DIR})
 
 # link the exe against the libraries
-target_link_libraries(${PROJECT_NAME}
-    PUBLIC
-    ${PROTOBUF_LIBRARIES}
-)
+target_link_libraries(engine_lib PUBLIC ${PROTOBUF_LIBRARIES})
 
-find_package(GTest REQUIRED)
-enable_testing()
-
-add_executable(gemm_test test/gemm_test.cpp gemm.cpp)
-target_link_libraries(gemm_test GTest::GTest GTest::Main)
-add_test(NAME gemm_test COMMAND gemm_test)
-
-add_executable(tensor_test test/tensor_test.cpp tensor.cpp)
-target_link_libraries(tensor_test GTest::GTest GTest::Main)
-add_test(NAME tensor_test COMMAND tensor_test)
-
-# node.cpp depends on tensor.cpp
-add_executable(node_test test/node_test.cpp node.cpp tensor.cpp)
-target_link_libraries(node_test GTest::GTest GTest::Main)
-add_test(NAME node_test COMMAND node_test)
-
-# operators.cpp depends on tensor.cpp, gemm.cpp
-add_executable(operators_test test/operators_test.cpp operators.cpp tensor.cpp gemm.cpp)
-target_link_libraries(operators_test GTest::GTest GTest::Main)
-add_test(NAME operators_test COMMAND operators_test)
+add_executable(engine_exe main.cpp)
+target_link_libraries(engine_exe PRIVATE engine_lib)

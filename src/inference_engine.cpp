@@ -57,7 +57,6 @@ Tensor<float> InferenceEngine::infer(const Tensor<float> &input)
             Tensor<float> A = inputs[0];
             Tensor<float> B = inputs[1];
             Tensor<float> bias = inputs[2];
-            // TODO, add handling for attributes.
             output = gemm(A, B, bias, transAVal, transBVal, alphaVal, betaVal);
         }
         else if (op_type == "Flatten")
