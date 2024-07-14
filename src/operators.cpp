@@ -7,7 +7,9 @@
 
 // Returns a Tensor containing the result of A*B + bias
 template <typename T>
-Tensor<T> gemm(const Tensor<T>& A, const Tensor<T>& B, const Tensor<T>& bias) {
+Tensor<T> gemm(const Tensor<T>& A, const Tensor<T>& B, const Tensor<T>& bias, 
+    const bool transA, const bool transB, const float alpha, const float beta) 
+{
     std::cout << "Op: Gemm" << std::endl;
 
     // Input Validation
@@ -19,26 +21,35 @@ Tensor<T> gemm(const Tensor<T>& A, const Tensor<T>& B, const Tensor<T>& bias) {
 
         throw std::invalid_argument("Invalid dimensions for Gemm inputs.");
     }
-    if (A.shape()[1] != B.shape()[0]) {
+    if (!transA && !transB && A.shape()[1] != B.shape()[0]) {
         std::cerr << "A.shape: " << A.stringShape() << std::endl;
         std::cerr << "B.shape: " << B.stringShape() << std::endl;
         throw std::invalid_argument("Matrix dimensions are not compatible for multiplication in Gemm.");
     }
-    if (B.shape()[0] != bias.shape()[0]) {
+    if (transA && !transB && A.shape()[0] != B.shape()[0]) {
         std::cerr << "A.shape: " << A.stringShape() << std::endl;
         std::cerr << "B.shape: " << B.stringShape() << std::endl;
-        std::cerr << "bias.shape: " << bias.stringShape() << std::endl;
-        throw std::invalid_argument("Bias dimensions are not compatible with the result in Gemm.");
+        throw std::invalid_argument("Matrix dimensions are not compatible for multiplication in Gemm.");
+    }
+    if (transB && !transA && A.shape()[1] != B.shape()[1]) {
+        std::cerr << "A.shape: " << A.stringShape() << std::endl;
+        std::cerr << "B.shape: " << B.stringShape() << std::endl;
+        throw std::invalid_argument("Matrix dimensions are not compatible for multiplication in Gemm.");
+    }
+    if (transA && transB && A.shape()[0] != B.shape()[1]) {
+        std::cerr << "A.shape: " << A.stringShape() << std::endl;
+        std::cerr << "B.shape: " << B.stringShape() << std::endl;
+        throw std::invalid_argument("Matrix dimensions are not compatible for multiplication in Gemm.");
     }
 
-    std::cout << "A.shape = (" << A.shape()[0] << ", " << A.shape()[1] << ")" << std::endl;
-    std::cout << "B.shape = (" << B.shape()[0] << ", " << B.shape()[1] << ")" << std::endl;
-    std::cout << "bias.shape = (" << bias.shape()[0] << ", " << bias.shape()[1] << ")"<< std::endl;
+    std::cout << "A.shape = " << A.stringShape() << std::endl;
+    std::cout << "B.shape = " << B.stringShape() << std::endl;
+    std::cout << "bias.shape = " << bias.stringShape() << std::endl;
 
-    // Calculate output dimensions
-    uint64_t N = A.shape()[0];
-    uint64_t M = B.shape()[0];
-    uint64_t K = B.shape()[1];
+    // Calculate output dimensions depending on transpositions.
+    uint64_t N = transA ? A.shape()[1] : A.shape()[0];
+    uint64_t M = transB ? B.shape()[1] : B.shape()[0];
+    uint64_t K = transB ? B.shape()[0] : B.shape()[1];
     std::cout << "N: " << N << std::endl;
     std::cout << "M: " << M << std::endl;
     std::cout << "K: " << K << std::endl;
@@ -58,7 +69,7 @@ Tensor<T> gemm(const Tensor<T>& A, const Tensor<T>& B, const Tensor<T>& bias) {
     const T* BiasData = bias.raw_data();
 
     std::cout << "Running gemm" << std::endl;
-    gemm(AData, BData, BiasData, outData.data(), N, M, K);
+    gemm(AData, BData, BiasData, outData.data(), N, M, K, transA, transB, alpha, beta);
     std::cout << "finished gemm" << std::endl;
 
     Tensor<T> result = Tensor<T>(outData, dims);
@@ -137,4 +148,4 @@ Tensor<T> relu(Tensor<T>& tensor)
 
 template Tensor<float> flatten<float>(Tensor<float> &tensor, uint64_t axis);
 template Tensor<float> relu<float>(Tensor<float> &tensor);
-template Tensor<float> gemm(const Tensor<float>& A, const Tensor<float>& B, const Tensor<float>& bias);
+template Tensor<float> gemm(const Tensor<float>& A, const Tensor<float>& B, const Tensor<float>& bias, const bool transA, const bool transB, const float alpha, const float beta);

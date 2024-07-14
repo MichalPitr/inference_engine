@@ -13,7 +13,7 @@ TEST(GemmTest, NoBias) {
     float expected[n] = {5.0, 5.0};
     float out[n];
 
-    gemm(A, B, C, out, n, m, k);
+    gemm(A, B, C, out, n, m, k, false, false, 1, 1);
 
     for (int i = 0; i < n; ++i) {
         EXPECT_NEAR(out[i], expected[i], 1e-5);  // Allow small tolerance for floating-point errors
@@ -32,7 +32,7 @@ TEST(GemmTest, MatrixVectorMultiplication) {
     float expected[n] = {24.0, 47.0};
     float out[n];
 
-    gemm(A, B, C, out, n, m, k);
+    gemm(A, B, C, out, n, m, k, false, false, 1, 1);
 
     for (int i = 0; i < n; ++i) {
         EXPECT_NEAR(out[i], expected[i], 1e-5);  // Allow small tolerance for floating-point errors
@@ -51,7 +51,7 @@ TEST(GemmTest, DifferentDimensions) {
     float expected[n] = {10.0, 19.0};
     float out[n];
 
-    gemm(A, B, C, out, n, m, k);
+    gemm(A, B, C, out, n, m, k, false, false, 1, 1);
 
     for (int i = 0; i < n; ++i) {
         EXPECT_NEAR(out[i], expected[i], 1e-5);
@@ -71,7 +71,7 @@ TEST(GemmTest, LargeMatrix) {
     float expected[n] = {1.5980344793090224, 1.6147210692751712, 1.1891793450983736, 1.4914794802764628, 1.3552971503375555, 0.9310592425482995, 2.1711042265782834, 1.391348102552378, 1.794526493404922, 1.1627076600419188};
     float out[n];
 
-    gemm(A, B, C, out, n, m, k);
+    gemm(A, B, C, out, n, m, k, false, false, 1, 1);
 
     for (int i = 0; i < n; ++i) {
         EXPECT_NEAR(out[i], expected[i], 1e-5);
@@ -90,7 +90,7 @@ TEST(GemmTest, AllZeroes) {
     float expected[n] = {};
     float out[n];
 
-    gemm(A, B, C, out, n, m, k);
+    gemm(A, B, C, out, n, m, k, false, false, 1, 1);
 
     for (int i = 0; i < n; ++i) {
         EXPECT_NEAR(out[i], expected[i], 1e-5);

@@ -39,7 +39,7 @@ TEST(OperatorsTest, gemmMatrixVector) {
     Tensor<float> B {{1, 1}, {2, 1}};
     Tensor<float> bias {{1, 1}, {2, 1}};
 
-    auto res = gemm(A, B, bias);
+    auto res = gemm(A, B, bias, false, false, 1, 1);
 
     std::vector<uint64_t> expectShape{2, 1};
     EXPECT_EQ(expectShape, res.shape());
@@ -52,11 +52,39 @@ TEST(OperatorsTest, gemmMatrixMatrix) {
     Tensor<float> B {{1, 1, 1, 1}, {2, 2}};
     Tensor<float> bias {{1, 2}, {2, 1}};
 
-    auto res = gemm(A, B, bias);
+    auto res = gemm(A, B, bias, false, false, 1, 1);
 
     std::vector<uint64_t> expectShape {2, 2};
     EXPECT_EQ(expectShape, res.shape());
 
     std::vector<float> expectData{4, 4, 9, 9};
+    EXPECT_EQ(expectData, res.data());
+}
+
+TEST(OperatorsTest, gemmMatrixMatrixTransA) {
+    Tensor<float> A {{1, 2}, {2, 1}};
+    Tensor<float> B {{1, 1, 1, 1}, {2, 2}};
+    Tensor<float> bias {{0, 0}, {2}};
+
+    auto res = gemm(A, B, bias, true, false, 1, 1);
+
+    std::vector<uint64_t> expectShape {1, 2};
+    EXPECT_EQ(expectShape, res.shape());
+
+    std::vector<float> expectData{3, 3};
+    EXPECT_EQ(expectData, res.data());
+}
+
+TEST(OperatorsTest, gemmMatrixMatrixTransB) {
+    Tensor<float> A {{1, 1, 1, 1}, {2, 2}};
+    Tensor<float> B {{1, 2}, {1, 2}};
+    Tensor<float> bias {{0, 0}, {2}};
+
+    auto res = gemm(A, B, bias, false, true, 1, 1);
+
+    std::vector<uint64_t> expectShape {2, 1};
+    EXPECT_EQ(expectShape, res.shape());
+
+    std::vector<float> expectData{3, 3};
     EXPECT_EQ(expectData, res.data());
 }

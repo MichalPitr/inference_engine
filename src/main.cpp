@@ -132,9 +132,13 @@ int main(int argc, char **argv)
             int transAVal, transBVal;
 
             std::tie(alphaOk, alphaVal) = getAttr<float>(node, "alpha");
+            if (!alphaOk) alphaVal = 1.0;
             std::tie(betaOk, betaVal) = getAttr<float>(node, "beta");
+            if (!betaOk) alphaVal = 1.0;
             std::tie(transAOk, transAVal) = getAttr<int>(node, "transA");
+            if (!transAOk) transAVal = false;
             std::tie(transBOk, transBVal) = getAttr<int>(node, "transB");
+            if (!transBOk) transBVal = false;
             std::cout << "alpha: " << alphaOk << ", " << alphaVal << "\n";
             std::cout << "beta: " << betaOk << ", " << betaVal << "\n";
             std::cout << "transA: " << transAOk << ", " << transAVal << "\n";
@@ -145,7 +149,7 @@ int main(int argc, char **argv)
             Tensor<float> B = inputs[1];
             Tensor<float> bias = inputs[2];
             // TODO, add handling for attributes.
-            output = gemm(A, B, bias);
+            output = gemm(A, B, bias, transAVal, transBVal, alphaVal, betaVal);
         }
         else if (op_type == "Flatten")
         {
