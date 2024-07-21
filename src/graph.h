@@ -13,14 +13,15 @@ public:
     std::vector<Node*> getNodes();
     std::vector<std::string> getInputs();
     std::vector<std::string> getOutputs();
-    void addNode(Node*);
+    void addNode(std::unique_ptr<Node> node);
     void addInput(std::string);
     void addOutput(std::string);
+    const Node& getNode(const std::string& nodeName) const;
 
 private:
     std::vector<std::string> inputs;
     std::vector<std::string> outputs;
-    std::vector<Node*> nodes;
+    std::unordered_map<std::string, std::unique_ptr<Node>> nodes_;  
 };
 
 #endif

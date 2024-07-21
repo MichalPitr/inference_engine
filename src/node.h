@@ -4,6 +4,8 @@
 #include <string>
 
 #include "tensor.h"
+#include "onnx-ml.pb.h"
+
 
 enum class OpType
 {
@@ -17,6 +19,7 @@ enum class OpType
 class Node {
 public:
     Node(const std::string& name, const OpType optype); // Constructor
+    Node(const onnx::NodeProto& nodeProto); // Constructor for string operation type
 
     // Accessors (getters)
     const std::string& getName() const;

@@ -14,7 +14,6 @@ def load_mnist_image(filename):
 # Load the ONNX model
 sess = rt.InferenceSession("../models/mnist_ffn.onnx")
 
-
 # Get input and output names
 input_name = sess.get_inputs()[0].name
 output_name = sess.get_outputs()[0].name

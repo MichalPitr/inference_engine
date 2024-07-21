@@ -3,6 +3,9 @@
 #include <fstream>
 #include <memory>
 
+#include "node.h"
+#include "graph.h"
+
 std::vector<float> reinterpret_string_to_float(const std::string &str);
 
 std::unique_ptr<InferenceEngine> ModelLoader::load(const std::string &modelFile)
@@ -39,6 +42,12 @@ std::unique_ptr<InferenceEngine> ModelLoader::load(const std::string &modelFile)
         const std::vector<uint64_t> shape(initializer.dims().begin(), initializer.dims().end());
         weights[initializer.name()] = Tensor<float>{data, shape};
     }
+
+    // TODO: Use custom graph and node representation.
+    // std::unique_ptr<Graph> graph = std::unique_ptr<Graph>(new Graph());
+    // for (const auto& nodeProto : model.graph().node()) {
+    //     graph->addNode(std::unique_ptr<Node>(new Node(nodeProto)));
+    // }
 
     return std::unique_ptr<InferenceEngine>(
         new InferenceEngine(model.graph(), std::move(weights)));
