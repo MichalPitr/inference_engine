@@ -1,5 +1,5 @@
 #include <iostream>
-#include <assert.h>
+#include <sstream>
 
 #include "input_loader.h"
 #include "tensor.h"
@@ -19,10 +19,17 @@ int main(int argc, char **argv)
 
     ModelLoader loader;
     std::unique_ptr<InferenceEngine> engine = loader.load(modelFile);
-
-    Tensor<float> input = load_input(inputFile);
-
-    Tensor<float> output = engine->infer(input);
+    
+    // 100 Sequential inference requests. 
+    std::string file = "/home/michal/code/inference_engine/inputs/image_";
+    for (int i = 0; i < 100; ++i) {
+        std::ostringstream oss;
+        oss << file << i << ".ubyte";
+        std::string formattedString = oss.str();
+        Tensor<float> input = load_input(formattedString);
+        Tensor<float> output = engine->infer(input);
+        std::cout << "Out: " << output.to_string() << "\n";
+    }
 
     return 0;
 }

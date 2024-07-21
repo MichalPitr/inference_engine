@@ -49,10 +49,6 @@ Tensor<float> InferenceEngine::infer(const Tensor<float> &input)
             std::tie(transBOk, transBVal) = getAttr<int>(node, "transB");
             if (!transBOk)
                 transBVal = false;
-            std::cout << "alpha: " << alphaOk << ", " << alphaVal << "\n";
-            std::cout << "beta: " << betaOk << ", " << betaVal << "\n";
-            std::cout << "transA: " << transAOk << ", " << transAVal << "\n";
-            std::cout << "transB: " << transBOk << ", " << transBVal << "\n";
 
             assert(inputs.size() == 3);
             Tensor<float> A = inputs[0];

@@ -24,7 +24,9 @@ public:
 
     std::vector<uint64_t> shape() const;
     void setShape(const std::vector<uint64_t>& shape);
+    
     std::string stringShape() const;
+    std::string to_string() const;
     
     uint64_t size() const;
 

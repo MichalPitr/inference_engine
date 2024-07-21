@@ -25,10 +25,11 @@ def view_mnist_image(filename):
     image.show()  # Display the image
     # Or, save the image: image.save('image.png')
 
-# Example usage: Extract the 10th image
-input_file = '../inputs/t10k-images.idx3-ubyte'
-output_file = '../inputs/image_0.ubyte'
-image_index = 0
 
-extract_mnist_image(input_file, output_file, image_index)
-view_mnist_image(output_file)
+if __name__ == "__main__":
+    # Example usage: Extract the 10th image
+    input_file = '../inputs/t10k-images.idx3-ubyte'
+
+    for image_idx in range(100):
+        output_file = f'../inputs/image_{image_idx}.ubyte'
+        extract_mnist_image(input_file, output_file, image_idx)

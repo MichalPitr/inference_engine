@@ -4,3 +4,4 @@ models/bert.onnx
 models/mnist-*.onnx
 models/resnet10.onnx
 utils/venv
+perf.data*

@@ -40,10 +40,6 @@ std::unique_ptr<InferenceEngine> ModelLoader::load(const std::string &modelFile)
         weights[initializer.name()] = Tensor<float>{data, shape};
     }
 
-    // Debugging Information (Optional)
-    std::cout << "Loaded ONNX model: " << model.graph().name() << std::endl;
-    std::cout << "Number of initializers: " << weights.size() << std::endl;
-
     return std::unique_ptr<InferenceEngine>(
         new InferenceEngine(model.graph(), std::move(weights)));
 }

@@ -8,7 +8,6 @@
 
 Tensor<float> load_input(const std::string& filename)
 {
-    std::cout << "Model input file: " << filename << std::endl;
     std::ifstream file(filename, std::ios::binary);
     if (!file.is_open()) {
         throw std::runtime_error("Error opening file: " + filename);
@@ -23,15 +22,7 @@ Tensor<float> load_input(const std::string& filename)
         floatValues[i] = static_cast<float>(bytes[i]); // Direct conversion and normalize.
     }
 
-    std::cout << "File size: " << floatValues.size() << std::endl;
     assert(floatValues.size() == 784);
-
-    for (std::size_t i = 0; i < floatValues.size(); ++i)
-    {
-        std::cout << " " << floatValues[i];
-    }
-    std::cout << std::endl;
-
     // Construct and return Tensor
     return Tensor<float>{floatValues, std::vector<uint64_t>{1, 1, 28, 28}}; 
 }

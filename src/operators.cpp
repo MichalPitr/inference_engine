@@ -10,8 +10,6 @@ template <typename T>
 Tensor<T> gemm(const Tensor<T>& A, const Tensor<T>& B, const Tensor<T>& bias, 
     const bool transA, const bool transB, const float alpha, const float beta) 
 {
-    std::cout << "Op: Gemm" << std::endl;
-
     // Input Validation
     if (A.shape().size() != 2 || B.shape().size() != 2 || bias.shape().size() == 0) {
         std::cerr << "A dims: " << A.shape().size() << " B dims " << B.shape().size() << " C dims " << bias.shape().size() << std::endl;
@@ -42,25 +40,15 @@ Tensor<T> gemm(const Tensor<T>& A, const Tensor<T>& B, const Tensor<T>& bias,
         throw std::invalid_argument("Matrix dimensions are not compatible for multiplication in Gemm.");
     }
 
-    std::cout << "A.shape = " << A.stringShape() << std::endl;
-    std::cout << "B.shape = " << B.stringShape() << std::endl;
-    std::cout << "bias.shape = " << bias.stringShape() << std::endl;
-
     // Calculate output dimensions depending on transpositions.
     uint64_t N = transA ? A.shape()[1] : A.shape()[0];
     uint64_t M = transB ? B.shape()[1] : B.shape()[0];
     uint64_t K = transB ? B.shape()[0] : B.shape()[1];
-    std::cout << "N: " << N << std::endl;
-    std::cout << "M: " << M << std::endl;
-    std::cout << "K: " << K << std::endl;
 
     std::vector<uint64_t> dims {N, K};
 
-    std::cout << "shape(" << N <<", " << K << ")\n";
-
     // Allocate memory for output and copy bias (C) using a loop
     std::vector<T> outData(N*K);
-    std::cout << "outData size " << outData.size() << std::endl;
 
     // Perform GEMM operation
     // Pass raw pointers to the underlying `gemm` function
@@ -68,19 +56,8 @@ Tensor<T> gemm(const Tensor<T>& A, const Tensor<T>& B, const Tensor<T>& bias,
     const T* BData = B.raw_data();
     const T* BiasData = bias.raw_data();
 
-    std::cout << "Running gemm" << std::endl;
     gemm(AData, BData, BiasData, outData.data(), N, M, K, transA, transB, alpha, beta);
-    std::cout << "finished gemm" << std::endl;
-
     Tensor<T> result = Tensor<T>(outData, dims);
-
-    // Print out values
-    std::cout << "out: ";
-    for (std::size_t i = 0; i < outData.size(); ++i) {
-        std::cout << outData[i] << ", ";
-    }
-    std::cout << std::endl;
-
     return result;
 }
 
@@ -88,7 +65,6 @@ Tensor<T> gemm(const Tensor<T>& A, const Tensor<T>& B, const Tensor<T>& bias,
 template <typename T>
 Tensor<T> flatten(Tensor<T> &tensor, uint64_t axis)
 {
-    std::cout << "Op: Flatten" << std::endl;
     assert(axis <= tensor.shape().size());
 
     uint64_t dimBefore = 1;
@@ -96,45 +72,24 @@ Tensor<T> flatten(Tensor<T> &tensor, uint64_t axis)
     {
         dimBefore *= tensor.shape()[i];
     }
-    std::cout << "dim before: " << dimBefore << std::endl;
 
     uint64_t dimAfter = 1;
     for (std::size_t i = axis; i < tensor.shape().size(); ++i)
     {
         dimAfter *= tensor.shape()[i];
     }
-    std::cout << "dim after: " << dimAfter << std::endl;
 
     // copy initialize. Would be better if we could modify it in place, but we
     // don't know if some other function relies on the input tensor. If we can do some dependency analysis, we could
     // probably optimize this.
     Tensor<T> flat(tensor);
-    for (auto s : flat.shape())
-    {
-        std::cout << "shape dim: " << s << '\n';
-    }
     flat.setShape({dimBefore, dimAfter});
-    for (auto s : flat.shape())
-    {
-        std::cout << "shape after dim: " << s << '\n';
-    }
-    // Diagnostic printing
-    std::cout << "flatten out:";
-    for (std::size_t i = 0; i < flat.size(); ++i)
-    {
-        std::cout << " " << flat.data()[i];
-    }
-    std::cout << std::endl;
-
-    // Set tensor name.
     return flat;
 }
 
 template <typename T>
 Tensor<T> relu(Tensor<T>& tensor)
 {
-    std::cout << "Op: Relu" << std::endl;
-
     // Copy input data.
     Tensor<T> output(tensor);
     T* raw = output.raw_data();
