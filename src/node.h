@@ -22,17 +22,14 @@ public:
     Node(const std::string &name, const OpType optype);
     Node(const onnx::NodeProto &nodeProto);
 
-    // Accessors (getters)
     const std::string &getName() const;
     OpType getOpType() const;
     const std::vector<std::string> &getInputs() const;
     const std::vector<std::string> &getOutputs() const;
     const std::unordered_map<std::string, Attribute> &getAttributes() const;
-
     template <typename T>
     std::tuple<bool, T> getAttribute(const std::string &name) const;
-
-    // Modifiers (setters/adders)
+    
     void addInput(std::string input);
     void addOutput(std::string output);
 

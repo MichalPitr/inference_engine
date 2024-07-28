@@ -33,7 +33,7 @@ const std::string &Graph::getOutputName(std::size_t index) const
     return outputs_.at(index);
 }
 
-std::vector<Node *> Graph::getNodes() const
+std::vector<Node *> Graph::getTopologicallySortedNodes() const
 {
     std::unordered_set<const Node *> visited;
     std::stack<const Node *> stack;

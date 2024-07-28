@@ -18,7 +18,7 @@ public:
 
     const std::string &getInputName(std::size_t index) const;
     const std::string &getOutputName(std::size_t index) const;
-    std::vector<Node *> getNodes() const;
+    std::vector<Node *> getTopologicallySortedNodes() const;
 
 private:
     std::vector<std::string> inputs_;

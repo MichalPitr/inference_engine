@@ -3,7 +3,6 @@
 
 #include <string>
 
-#include "onnx-ml.pb.h"
 #include "tensor.h"
 #include "graph.h"
 
