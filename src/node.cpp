@@ -48,21 +48,14 @@ void Node::addOutput(std::string output)
 }
 
 template <typename T>
-std::tuple<bool, T> Node::getAttribute(const std::string &name) const
+std::optional<T> Node::getAttribute(const std::string &name) const
 {
     auto it = attributes.find(name);
-    if (it != attributes.end())
+    if (it != attributes.end() && std::holds_alternative<T>(it->second.getValue())) 
     {
-        if (std::holds_alternative<T>(it->second.getValue()))
-        {
-            return {true, std::get<T>(it->second.getValue())};
-        }
-        else
-        {
-            throw std::runtime_error("Attribute type mismatch");
-        }
-    }
-    return {false, T()};
+        return std::get<T>(it->second.getValue());
+    } 
+    return std::nullopt;
 }
 
 OpType onnxOpTypeConverter(const std::string opType)
@@ -79,8 +72,18 @@ OpType onnxOpTypeConverter(const std::string opType)
     {
         return OpType::Flatten;
     }
+    else if (opType == "Conv")
+    {
+        return OpType::Conv;
+    }
+    else if (opType == "MaxPool")
+    {
+        return OpType::MaxPool;
+    }
+    
     throw std::runtime_error("Unknown operation type: " + opType);
 }
 
-template std::tuple<bool, int64_t> Node::getAttribute(const std::string &) const;
-template std::tuple<bool, float> Node::getAttribute(const std::string &) const;
+template std::optional<int64_t> Node::getAttribute(const std::string &) const;
+template std::optional<float> Node::getAttribute(const std::string &) const;
+template std::optional<std::vector<int64_t>> Node::getAttribute(const std::string &) const;

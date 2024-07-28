@@ -2,6 +2,8 @@
 #define INFERENCE_ENGINE_H
 
 #include <string>
+#include <memory>
+#include <unordered_map>
 
 #include "tensor.h"
 #include "graph.h"

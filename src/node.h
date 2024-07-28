@@ -2,6 +2,7 @@
 #define NODE_H
 
 #include <string>
+#include <optional>
 
 #include "tensor.h"
 #include "attribute.h"
@@ -14,6 +15,8 @@ enum class OpType
     Gemm,    // General Matrix Multiplication
     Flatten, // Flatten an input
     Relu,    // Rectified Linear Unit
+    Conv,    // Convolutional Layer
+    MaxPool, // Max Pooling Layer
 };
 
 class Node
@@ -28,7 +31,7 @@ public:
     const std::vector<std::string> &getOutputs() const;
     const std::unordered_map<std::string, Attribute> &getAttributes() const;
     template <typename T>
-    std::tuple<bool, T> getAttribute(const std::string &name) const;
+    std::optional<T> getAttribute(const std::string &name) const;
     
     void addInput(std::string input);
     void addOutput(std::string output);

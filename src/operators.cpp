@@ -101,6 +101,12 @@ Tensor<T> relu(Tensor<T>& tensor)
     return output;
 }
 
+template <typename T>
+Tensor<T> conv(Tensor<T>& tensor)
+{
+    // TODO: implement
+}
+
 template Tensor<float> flatten<float>(Tensor<float> &tensor, uint64_t axis);
 template Tensor<float> relu<float>(Tensor<float> &tensor);
 template Tensor<float> gemm(const Tensor<float>& A, const Tensor<float>& B, const Tensor<float>& bias, const bool transA, const bool transB, const float alpha, const float beta);

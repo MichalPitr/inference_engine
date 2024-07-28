@@ -6,7 +6,7 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/build/src/engine_exe", // Path to your executable
-            "args": ["${workspaceFolder}/models/mnist_ffn.onnx", "haha"],
+            "args": ["${workspaceFolder}/models/mnist_conv_ffn.onnx", "haha"],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [],

@@ -70,7 +70,7 @@
     },
         "cmake.debugConfig": {
             "args": [
-                "/home/michal/code/inference_engine/models/mnist_ffn.onnx",
+                "/home/michal/code/inference_engine/models/mnist_conv_ffn.onnx",
                 "/home/michal/code/inference_engine/inputs/image_0.ubyte",
             ]
         },

@@ -33,50 +33,64 @@ Tensor<float> InferenceEngine::infer(const Tensor<float> &input)
 
         Tensor<float> output{};
         const auto op_type = node->getOpType();
-        if (op_type == OpType::Gemm)
+        switch (node->getOpType())
         {
-            bool alphaOk, betaOk, transAOk, transBOk;
-            float alphaVal, betaVal;
-            int transAVal, transBVal;
-
-            std::tie(alphaOk, alphaVal) = node->getAttribute<float>("alpha");
-            if (!alphaOk)
-                alphaVal = 1.0;
-            std::tie(betaOk, betaVal) = node->getAttribute<float>("beta");
-            if (!betaOk)
-                alphaVal = 1.0;
-            std::tie(transAOk, transAVal) = node->getAttribute<int64_t>("transA");
-            if (!transAOk)
-                transAVal = false;
-            std::tie(transBOk, transBVal) = node->getAttribute<int64_t>("transB");
-            if (!transBOk)
-                transBVal = false;
+        case OpType::Gemm:
+        {
+            float alpha = node->getAttribute<float>("alpha").value_or(1.0);
+            float beta = node->getAttribute<float>("beta").value_or(1.0);
+            int transA = node->getAttribute<int64_t>("transA").value_or(0);
+            int transB = node->getAttribute<int64_t>("transB").value_or(0);
 
             assert(inputs.size() == 3);
             Tensor<float> A = inputs[0];
             Tensor<float> B = inputs[1];
             Tensor<float> bias = inputs[2];
-            output = gemm(A, B, bias, transAVal, transBVal, alphaVal, betaVal);
+            output = gemm(A, B, bias, transA, transB, alpha, beta);
+            break;
         }
-        else if (op_type == OpType::Flatten)
+        case OpType::Flatten:
         {
             assert(inputs.size() == 1);
             Tensor<float> tensor = inputs[0];
-            bool axisOk;
-            int axis;
-            std::tie(axisOk, axis) = node->getAttribute<int64_t>("axis");
-            if (!axisOk)
+            auto axisOpt = node->getAttribute<int64_t>("axis");
+            if (!axisOpt.has_value())
                 throw std::runtime_error("Axis missing for flatten operation");
-            output = flatten(tensor, axis);
+            output = flatten(tensor, axisOpt.value());
+            break;
         }
-        else if (op_type == OpType::Relu)
+        case OpType::Relu:
         {
             assert(inputs.size() == 1);
             Tensor<float> tensor = inputs[0];
             output = relu(tensor);
+            break;
         }
-        else
+        case OpType::Conv:
         {
+            assert(inputs.size() == 3);
+            Tensor<float> X = inputs[0];
+            Tensor<float> W = inputs[1];
+            Tensor<float> B = inputs[2];
+            auto dilation = node->getAttribute<std::vector<int64_t>>("dilations");
+            if (!dilation.has_value())
+                throw std::runtime_error("dilations missing for conv operator");
+            auto kernel_shape = node->getAttribute<std::vector<int64_t>>("kernel_shape");
+            if (!kernel_shape.has_value())
+                throw std::runtime_error("kernel shape missing for conv operator");
+            auto pads = node->getAttribute<std::vector<int64_t>>("kernel_shape");
+            if (!pads.has_value())
+                throw std::runtime_error("pads missing for conv operator");
+            auto strides = node->getAttribute<std::vector<int64_t>>("strides");
+            if (!strides.has_value())
+                throw std::runtime_error("strides missing for conv operator");
+            auto group = node->getAttribute<int64_t>("group");
+            if (!group.has_value())
+                throw std::runtime_error("group missing for conv operator");
+                
+            throw std::logic_error("Not Implemented");
+        }
+        default:
             throw std::runtime_error("Op_type no supported: " + op_type_to_string(op_type));
         }
 
@@ -116,6 +130,10 @@ std::string op_type_to_string(OpType op_type)
         return "Flatten";
     case OpType::Relu:
         return "Relu";
+    case OpType::Conv:
+        return "Conv";
+    case OpType::MaxPool:
+        return "MaxPool";
     default:
         throw std::runtime_error("Unknown op_type");
     }
