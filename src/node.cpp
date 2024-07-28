@@ -7,23 +7,24 @@ Node::Node(const std::string &name, OpType opType)
     : name(name), opType(opType) {}
 
 Node::Node(const onnx::NodeProto &nodeProto)
+    : name(nodeProto.name()), opType(onnxOpTypeConverter(nodeProto.op_type())),
+      inputs(nodeProto.input().begin(), nodeProto.input().end()),
+      outputs(nodeProto.output().begin(), nodeProto.output().end())
 {
-    opType = onnxOpTypeConverter(nodeProto.op_type());
-
-    for (const auto &input : nodeProto.input())
+    for (const auto &attrProto : nodeProto.attribute())
     {
-        inputs.push_back(input);
-    }
-
-    for (const auto &output : nodeProto.output())
-    {
-        outputs.push_back(output);
+        attributes.emplace(attrProto.name(), Attribute(attrProto));
     }
 }
 
 const std::string &Node::getName() const
 {
     return name;
+}
+
+OpType Node::getOpType() const
+{
+    return opType;
 }
 
 const std::vector<std::string> &Node::getInputs() const
@@ -46,6 +47,24 @@ void Node::addOutput(std::string output)
     outputs.push_back(output);
 }
 
+template <typename T>
+std::tuple<bool, T> Node::getAttribute(const std::string &name) const
+{
+    auto it = attributes.find(name);
+    if (it != attributes.end())
+    {
+        if (std::holds_alternative<T>(it->second.getValue()))
+        {
+            return {true, std::get<T>(it->second.getValue())};
+        }
+        else
+        {
+            throw std::runtime_error("Attribute type mismatch");
+        }
+    }
+    return {false, T()};
+}
+
 OpType onnxOpTypeConverter(const std::string opType)
 {
     if (opType == "Gemm")
@@ -62,3 +81,6 @@ OpType onnxOpTypeConverter(const std::string opType)
     }
     throw std::runtime_error("Unknown operation type: " + opType);
 }
+
+template std::tuple<bool, int64_t> Node::getAttribute(const std::string &) const;
+template std::tuple<bool, float> Node::getAttribute(const std::string &) const;

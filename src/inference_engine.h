@@ -5,16 +5,17 @@
 
 #include "onnx-ml.pb.h"
 #include "tensor.h"
+#include "graph.h"
 
 class InferenceEngine
 {
 public:
-    InferenceEngine(const onnx::GraphProto &graph,
+    InferenceEngine(std::unique_ptr<Graph> graph,
                     std::unordered_map<std::string, Tensor<float>> weights);
     Tensor<float> infer(const Tensor<float> &input);
 
 private:
-    onnx::GraphProto graph_;
+    std::unique_ptr<Graph> graph_;
     std::unordered_map<std::string, Tensor<float>> weights_;
 };
 

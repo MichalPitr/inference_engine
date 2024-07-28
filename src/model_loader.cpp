@@ -43,14 +43,8 @@ std::unique_ptr<InferenceEngine> ModelLoader::load(const std::string &modelFile)
         weights[initializer.name()] = Tensor<float>{data, shape};
     }
 
-    // TODO: Use custom graph and node representation.
-    // std::unique_ptr<Graph> graph = std::unique_ptr<Graph>(new Graph());
-    // for (const auto& nodeProto : model.graph().node()) {
-    //     graph->addNode(std::unique_ptr<Node>(new Node(nodeProto)));
-    // }
-
-    return std::unique_ptr<InferenceEngine>(
-        new InferenceEngine(model.graph(), std::move(weights)));
+    std::unique_ptr<Graph> graph = std::make_unique<Graph>(model.graph());
+    return std::make_unique<InferenceEngine>(std::move(graph), weights);
 }
 
 std::vector<float> reinterpret_string_to_float(const std::string &str)

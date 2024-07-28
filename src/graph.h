@@ -3,25 +3,29 @@
 
 #include <string>
 #include <vector>
+#include <stack>
 
 #include "node.h"
+#include "onnx-ml.pb.h"
 
-class Graph {
+class Graph
+{
 public:
     Graph();
-    
-    std::vector<Node*> getNodes();
-    std::vector<std::string> getInputs();
-    std::vector<std::string> getOutputs();
+    Graph(const onnx::GraphProto &graphProto);
+
     void addNode(std::unique_ptr<Node> node);
-    void addInput(std::string);
-    void addOutput(std::string);
-    const Node& getNode(const std::string& nodeName) const;
+
+    const std::string &getInputName(std::size_t index) const;
+    const std::string &getOutputName(std::size_t index) const;
+    std::vector<Node *> getNodes() const;
 
 private:
-    std::vector<std::string> inputs;
-    std::vector<std::string> outputs;
-    std::unordered_map<std::string, std::unique_ptr<Node>> nodes_;  
+    std::vector<std::string> inputs_;
+    std::vector<std::string> outputs_;
+    std::unordered_map<std::string, std::unique_ptr<Node>> nodes_;
+
+    void topologicalSortUtil(const Node *node, std::unordered_set<const Node *> &visited, std::stack<const Node *> &stack) const;
 };
 
 #endif
