@@ -102,11 +102,28 @@ Tensor<T> relu(Tensor<T>& tensor)
 }
 
 template <typename T>
-Tensor<T> conv(Tensor<T>& tensor)
+Tensor<T> add(Tensor<T>& A, Tensor<T>& B)
 {
-    // TODO: implement
+    assert(A.shape() == B.shape());
+    // Copy input data.
+    Tensor<T> output(A);
+    T* raw = output.raw_data();
+    T* b_raw = B.raw_data(); 
+    for (std::size_t i = 0; i < output.size(); ++i)
+    {
+        raw[i] += b_raw[i];
+    }
+
+    return output;
 }
+
+// template <typename T>
+// Tensor<T> conv(Tensor<T>& tensor)
+// {
+//     // TODO: implement
+// }
 
 template Tensor<float> flatten<float>(Tensor<float> &tensor, uint64_t axis);
 template Tensor<float> relu<float>(Tensor<float> &tensor);
+template Tensor<float> add<float>(Tensor<float> &A, Tensor<float> &B);
 template Tensor<float> gemm(const Tensor<float>& A, const Tensor<float>& B, const Tensor<float>& bias, const bool transA, const bool transB, const float alpha, const float beta);

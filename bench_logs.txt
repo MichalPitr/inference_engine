@@ -1,6 +1,9 @@
+Compile in RelWithDebInfo mode
 -----------------------------------------------------
 Benchmark           Time             CPU   Iterations
 -----------------------------------------------------
 BM_Infer       388595 ns       388575 ns         1743
 BM_Infer       386531 ns       386526 ns         1658
 BM_Infer       433230 ns       432953 ns         1818
+<Added adjList and new topological sorting>
+BM_Infer       411121 ns       411113 ns         1852

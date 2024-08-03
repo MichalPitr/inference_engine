@@ -18,14 +18,17 @@ public:
 
     const std::string &getInputName(std::size_t index) const;
     const std::string &getOutputName(std::size_t index) const;
-    std::vector<Node *> getTopologicallySortedNodes() const;
+    void printGraph() const;
+    std::vector<const Node *> getTopologicallySortedNodes();
 
 private:
+    void topologicalSortUtil(const Node *node, std::unordered_set<const Node *> &visited, std::stack<const Node *> &stack) const;
+
     std::vector<std::string> inputs_;
     std::vector<std::string> outputs_;
     std::unordered_map<std::string, std::unique_ptr<Node>> nodes_;
-
-    void topologicalSortUtil(const Node *node, std::unordered_set<const Node *> &visited, std::stack<const Node *> &stack) const;
+    std::unordered_map<const Node*, std::vector<const Node*>> adjList_;
+    std::vector<const Node*> sortedNodes_;
 };
 
 #endif

@@ -64,6 +64,10 @@ OpType onnxOpTypeConverter(const std::string opType)
     {
         return OpType::Gemm;
     }
+    if (opType == "Add")
+    {
+        return OpType::Add;
+    }
     else if (opType == "Relu")
     {
         return OpType::Relu;

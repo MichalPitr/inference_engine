@@ -62,8 +62,13 @@ Tensor<float> InferenceEngine::infer(const Tensor<float> &input)
         case OpType::Relu:
         {
             assert(inputs.size() == 1);
-            Tensor<float> tensor = inputs[0];
-            output = relu(tensor);
+            output = relu(inputs[0]);
+            break;
+        }
+        case OpType::Add:
+        {
+            assert(inputs.size() == 2);
+            output = add(inputs[0], inputs[1]);
             break;
         }
         case OpType::Conv:
@@ -124,6 +129,8 @@ std::string op_type_to_string(OpType op_type)
         return "Input";
     case OpType::Output:
         return "Output";
+    case OpType::Add:
+        return "Add";
     case OpType::Gemm:
         return "Gemm";
     case OpType::Flatten:
