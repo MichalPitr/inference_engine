@@ -24,7 +24,7 @@ std::unique_ptr<InferenceEngine> ModelLoader::load(const std::string &modelFile)
         throw std::runtime_error("Failed to parse the ONNX model");
     }
 
-    // Validate Model (Basic)
+    // Basic validation, expand as needed.
     if (!model.has_graph() || model.graph().node_size() == 0)
     {
         throw std::runtime_error("Invalid ONNX model: missing graph or nodes");
@@ -49,16 +49,13 @@ std::unique_ptr<InferenceEngine> ModelLoader::load(const std::string &modelFile)
 
 std::vector<float> reinterpret_string_to_float(const std::string &str)
 {
-    // Safety Check: Ensure size is a multiple of sizeof(float)
     if (str.size() % sizeof(float) != 0)
     {
         throw std::runtime_error("String size is not a multiple of sizeof(float)");
     }
 
-    // Create a temporary buffer and copy the string's data
     std::vector<char> buffer(str.begin(), str.end());
 
-    // Reinterpret the buffer's data as floats
     return std::vector<float>(
         reinterpret_cast<const float *>(buffer.data()),
         reinterpret_cast<const float *>(buffer.data() + str.size()));

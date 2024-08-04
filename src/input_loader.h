@@ -2,7 +2,7 @@
 #define INPUT_LOADER_H
 
 #include <string>
-#include "tensor.h" // Assuming you have a Tensor class defined
+#include "tensor.h"
 
 Tensor<float> load_input(const std::string& filename); 
 

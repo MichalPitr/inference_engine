@@ -13,16 +13,16 @@ Tensor<float> load_input(const std::string& filename)
         throw std::runtime_error("Error opening file: " + filename);
     }
 
-    std::vector<unsigned char> bytes(784); // Preallocate for 784 bytes
+    // TODO: generalize, probably something like Triton's model registry with config file specifying input dims.
+    std::vector<unsigned char> bytes(784);
     file.read(reinterpret_cast<char *>(bytes.data()), bytes.size());
 
     std::vector<float> floatValues(bytes.size());
     for (size_t i = 0; i < bytes.size(); ++i)
     {
-        floatValues[i] = static_cast<float>(bytes[i]); // Direct conversion and normalize.
+        floatValues[i] = static_cast<float>(bytes[i]);
     }
 
     assert(floatValues.size() == 784);
-    // Construct and return Tensor
     return Tensor<float>{floatValues, std::vector<uint64_t>{1, 1, 28, 28}}; 
 }

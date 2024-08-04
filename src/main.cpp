@@ -22,7 +22,7 @@ int main(int argc, char **argv)
     
     // 100 Sequential inference requests. 
     std::string file = "/home/michal/code/inference_engine/inputs/image_";
-    for (int i = 0; i < 100; ++i) {
+    for (int i = 30; i < 31; ++i) {
         std::ostringstream oss;
         oss << file << i << ".ubyte";
         std::string formattedString = oss.str();

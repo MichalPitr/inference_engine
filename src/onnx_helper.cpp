@@ -9,10 +9,9 @@ std::tuple<bool, T> getAttr(const onnx::NodeProto& node, const std::string& attr
             } else if (std::is_same<T, int>::value) {
                 return {true, attr.i()};
             }
-            // Add more cases for other types if needed
         }
     }
-    return {false, {}};  // Attribute not found
+    return {false, {}};
 }
 
 template std::tuple<bool, float> getAttr(const onnx::NodeProto& node, const std::string& attrName);

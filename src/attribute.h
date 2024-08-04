@@ -9,7 +9,6 @@
 class Attribute
 {
 public:
-    // TODO add variants as needed.
     using AttributeValue = std::variant<int64_t, float, std::vector<int64_t>>;
 
     Attribute(const onnx::AttributeProto &attrProto);

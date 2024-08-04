@@ -10,7 +10,6 @@ template <typename T>
 Tensor<T> gemm(const Tensor<T>& A, const Tensor<T>& B, const Tensor<T>& bias, 
     const bool transA, const bool transB, const float alpha, const float beta) 
 {
-    // Input Validation
     if (A.shape().size() != 2 || B.shape().size() != 2 || bias.shape().size() == 0) {
         std::cerr << "A dims: " << A.shape().size() << " B dims " << B.shape().size() << " C dims " << bias.shape().size() << std::endl;
         std::cerr << "A.shape: " << A.stringShape() << std::endl;
@@ -47,11 +46,8 @@ Tensor<T> gemm(const Tensor<T>& A, const Tensor<T>& B, const Tensor<T>& bias,
 
     std::vector<uint64_t> dims {N, K};
 
-    // Allocate memory for output and copy bias (C) using a loop
     std::vector<T> outData(N*K);
 
-    // Perform GEMM operation
-    // Pass raw pointers to the underlying `gemm` function
     const T* AData = A.raw_data();
     const T* BData = B.raw_data();
     const T* BiasData = bias.raw_data();
@@ -90,7 +86,6 @@ Tensor<T> flatten(Tensor<T> &tensor, uint64_t axis)
 template <typename T>
 Tensor<T> relu(Tensor<T>& tensor)
 {
-    // Copy input data.
     Tensor<T> output(tensor);
     T* raw = output.raw_data();
     for (std::size_t i = 0; i < output.size(); ++i)
@@ -105,7 +100,6 @@ template <typename T>
 Tensor<T> add(Tensor<T>& A, Tensor<T>& B)
 {
     assert(A.shape() == B.shape());
-    // Copy input data.
     Tensor<T> output(A);
     T* raw = output.raw_data();
     T* b_raw = B.raw_data(); 

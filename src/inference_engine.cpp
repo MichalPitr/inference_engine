@@ -18,7 +18,6 @@ Tensor<float> InferenceEngine::infer(const Tensor<float> &input)
 {
     weights_[graph_->getInputName(0)] = input;
 
-    // Iterate over nodes (assuming topologically sorted)
     for (const auto &node : graph_->getTopologicallySortedNodes())
     {
         std::vector<Tensor<float>> inputs;
@@ -111,7 +110,6 @@ Tensor<float> InferenceEngine::infer(const Tensor<float> &input)
         weights_[node->getOutputs()[0]] = output;
     }
 
-    // Get output
     std::string graph_output = graph_->getOutputName(0);
     if (weights_.find(graph_output) == weights_.end())
     {

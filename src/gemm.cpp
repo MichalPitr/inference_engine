@@ -25,7 +25,6 @@ void gemm(const float *A, const float *B, const float *bias, float *out, const i
         }
     }
 
-    // Only works if bias is (n, 1)
     for (int r = 0; r < n; ++r)
     {
         for (int c = 0; c < k; ++c)
