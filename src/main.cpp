@@ -22,14 +22,14 @@ int main(int argc, char **argv)
     
     // 100 Sequential inference requests. 
     std::string file = "/home/michal/code/inference_engine/inputs/image_";
-    for (int i = 30; i < 31; ++i) {
-        std::ostringstream oss;
-        oss << file << i << ".ubyte";
-        std::string formattedString = oss.str();
-        Tensor<float> input = load_input(formattedString);
-        Tensor<float> output = engine->infer(input);
-        std::cout << "Out: " << output.to_string() << "\n";
-    }
+    // for (int i = 0; i < 1; ++i) {
+        // std::ostringstream oss;
+        // oss << file << i << ".ubyte";
+        // std::string formattedString = oss.str();
+    Tensor<float> input = load_input(inputFile);
+    Tensor<float> output = engine->infer(input);
+    std::cout << "Out: " << output.to_string() << "\n";
+    // }
 
     return 0;
 }

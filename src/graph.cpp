@@ -16,7 +16,7 @@ Graph::Graph(const onnx::GraphProto &graphProto)
     {
         outputs_.push_back(outputProto.name());
     }
-    printGraph();
+    // printGraph();
 }
 
 void Graph::addNode(std::unique_ptr<Node> node)

@@ -10,8 +10,6 @@ std::vector<float> reinterpret_string_to_float(const std::string &str);
 
 std::unique_ptr<InferenceEngine> ModelLoader::load(const std::string &modelFile)
 {
-    std::cout << "model path:" << modelFile << std::endl;
-
     std::fstream input(modelFile, std::ios::in | std::ios::binary);
     if (!input.is_open())
     {
