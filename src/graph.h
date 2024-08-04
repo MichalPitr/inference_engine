@@ -14,11 +14,11 @@ public:
     Graph();
     Graph(const onnx::GraphProto &graphProto);
 
-    void addNode(std::unique_ptr<Node> node);
-
     const std::string &getInputName(std::size_t index) const;
     const std::string &getOutputName(std::size_t index) const;
     void printGraph() const;
+    
+    void addNode(std::unique_ptr<Node> node);
     std::vector<const Node *> getTopologicallySortedNodes();
 
 private:
