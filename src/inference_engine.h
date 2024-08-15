@@ -14,8 +14,13 @@ public:
     InferenceEngine(std::unique_ptr<Graph> graph,
                     std::unordered_map<std::string, Tensor<float>> weights);
     Tensor<float> infer(const Tensor<float> &input);
+    void applyOptimizations();
 
 private:
+    void applyConstantFolding();
+    Tensor<float> evaluateNode(const Node *node, std::vector<Tensor<float>> inputs);
+    std::vector<Tensor<float>> prepareNodeInputs(const Node* node);
+
     std::unique_ptr<Graph> graph_;
     std::unordered_map<std::string, Tensor<float>> weights_;
 };

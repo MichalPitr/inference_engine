@@ -27,6 +27,7 @@ int main(int argc, char **argv)
         // oss << file << i << ".ubyte";
         // std::string formattedString = oss.str();
     Tensor<float> input = load_input(inputFile);
+    engine->applyOptimizations();
     Tensor<float> output = engine->infer(input);
     std::cout << "Out: " << output.to_string() << "\n";
     // }

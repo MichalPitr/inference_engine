@@ -1,7 +1,5 @@
 #include "graph.h"
 
-Graph::Graph() {}
-
 Graph::Graph(const onnx::GraphProto &graphProto)
 {
     for (const auto &nodeProto : graphProto.node())
@@ -25,7 +23,7 @@ void Graph::addNode(std::unique_ptr<Node> node)
     nodes_[nodeName] = std::move(node);
 
     Node *nodePtr = nodes_[nodeName].get();
-    adjList_[nodePtr] = std::vector<const Node *>{};
+    adjList_[nodePtr] = std::vector<Node *>{};
 
     // Check if node is child of existing nodes.
     for (const auto &inputName : nodePtr->getInputs())
@@ -54,6 +52,13 @@ void Graph::addNode(std::unique_ptr<Node> node)
     }
 }
 
+void Graph::replaceNode(Node* oldNode, std::unique_ptr<Node> newNode) {
+    std::string name = oldNode->getName();
+    auto cp = adjList_[oldNode];
+    nodes_[name] = std::move(newNode);
+    adjList_[nodes_[name].get()] = cp;
+}
+
 const std::string &Graph::getInputName(std::size_t index) const
 {
     return inputs_.at(index);
@@ -64,21 +69,21 @@ const std::string &Graph::getOutputName(std::size_t index) const
     return outputs_.at(index);
 }
 
-std::vector<const Node *> Graph::getTopologicallySortedNodes()
+std::vector<Node *> Graph::getTopologicallySortedNodes()
 {
     if (sortedNodes_.size() > 0) {
         return sortedNodes_;
     }
 
-    std::unordered_set<const Node *> visited;
-    std::stack<const Node *> stack;
+    std::unordered_set<Node *> visited;
+    std::stack<Node *> stack;
 
-    std::vector<const Node *> input_nodes;
-    for (const auto &nodePair : nodes_)
+    std::vector<Node *> input_nodes;
+    for (auto &nodePair : nodes_)
     {
-        for (const auto &node_input : nodePair.second.get()->getInputs())
+        for (auto &node_input : nodePair.second.get()->getInputs())
         {
-            for (const auto &graph_input : inputs_)
+            for (auto &graph_input : inputs_)
             {
                 if (node_input == graph_input)
                 {
@@ -91,12 +96,12 @@ std::vector<const Node *> Graph::getTopologicallySortedNodes()
     endloop:;
     }
 
-    for (const auto node : input_nodes)
+    for (auto node : input_nodes)
     {
         topologicalSortUtil(node, visited, stack);
     }
 
-    std::vector<const Node *> sortedNodes;
+    std::vector<Node *> sortedNodes;
     while (!stack.empty())
     {
         sortedNodes.push_back(stack.top());
@@ -108,18 +113,18 @@ std::vector<const Node *> Graph::getTopologicallySortedNodes()
     return sortedNodes;
 }
 
-void Graph::topologicalSortUtil(const Node *node, std::unordered_set<const Node *> &visited, std::stack<const Node *> &stack) const
+void Graph::topologicalSortUtil(Node *node, std::unordered_set<Node *> &visited, std::stack<Node *> &stack)
 {
     visited.insert(node);
 
-    const std::vector<const Node *> children = adjList_.at(node);
+    std::vector<Node *> children = adjList_.at(node);
     if (children.size() == 0)
     {
         stack.push(node);
         return;
     }
 
-    for (const auto child : children)
+    for (auto child : children)
     {
         if (visited.find(child) == visited.end())
         {

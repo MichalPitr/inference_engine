@@ -11,24 +11,24 @@
 class Graph
 {
 public:
-    Graph();
+    Graph() = default;
     Graph(const onnx::GraphProto &graphProto);
 
     const std::string &getInputName(std::size_t index) const;
     const std::string &getOutputName(std::size_t index) const;
     void printGraph() const;
     
+    std::vector<Node *> getTopologicallySortedNodes();
     void addNode(std::unique_ptr<Node> node);
-    std::vector<const Node *> getTopologicallySortedNodes();
+    void replaceNode(Node* oldNode, std::unique_ptr<Node> newNode);
 
 private:
-    void topologicalSortUtil(const Node *node, std::unordered_set<const Node *> &visited, std::stack<const Node *> &stack) const;
-
+    void topologicalSortUtil(Node *node, std::unordered_set<Node *> &visited, std::stack<Node *> &stack);
     std::vector<std::string> inputs_;
     std::vector<std::string> outputs_;
     std::unordered_map<std::string, std::unique_ptr<Node>> nodes_;
-    std::unordered_map<const Node*, std::vector<const Node*>> adjList_;
-    std::vector<const Node*> sortedNodes_;
+    std::unordered_map<Node*, std::vector<Node*>> adjList_;
+    std::vector<Node*> sortedNodes_;
 };
 
 #endif
