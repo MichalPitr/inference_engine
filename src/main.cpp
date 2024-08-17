@@ -19,17 +19,22 @@ int main(int argc, char **argv)
 
     ModelLoader loader;
     std::unique_ptr<InferenceEngine> engine = loader.load(modelFile);
-    
-    // 100 Sequential inference requests. 
+
     std::string file = "/home/michal/code/inference_engine/inputs/image_";
-    for (int i = 0; i < 100; ++i) {
-        std::ostringstream oss;
-        oss << file << i << ".ubyte";
-        std::string formattedString = oss.str();
-        Tensor<float> input = load_input(formattedString);
-        // engine->applyOptimizations();
-        Tensor<float> output = engine->infer(input);
-        std::cout << "Out: " << output.to_string() << "\n";
+    // Rerun 100 times.
+    for (int j = 0; j < 5; ++j)
+    {
+        // 100 Sequential inference requests.
+        for (int i = 0; i < 100; ++i)
+        {
+            std::ostringstream oss;
+            oss << file << i << ".ubyte";
+            std::string formattedString = oss.str();
+            Tensor<float> input = load_input(formattedString);
+            // engine->applyOptimizations();
+            Tensor<float> output = engine->infer(input);
+            std::cout << "Out: " << output.to_string() << "\n";
+        }
     }
 
     return 0;

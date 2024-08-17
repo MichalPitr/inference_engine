@@ -48,7 +48,7 @@ Tensor<float> InferenceEngine::infer(const Tensor<float> &input)
     return weights_[graph_output];
 }
 
-Tensor<float> InferenceEngine::evaluateNode(const Node *node, std::vector<Tensor<float>*> inputs)
+Tensor<float> InferenceEngine::evaluateNode(const Node *node, const std::vector<Tensor<float> *> inputs)
 {
     const auto op_type = node->getOpType();
     switch (node->getOpType())
@@ -61,15 +61,15 @@ Tensor<float> InferenceEngine::evaluateNode(const Node *node, std::vector<Tensor
         int transB = node->getAttribute<int64_t>("transB").value_or(0);
 
         assert(inputs.size() == 3);
-        Tensor<float> A = *inputs[0];
-        Tensor<float> B = *inputs[1];
-        Tensor<float> bias = *inputs[2];
+        const Tensor<float> &A = *inputs[0];
+        const Tensor<float> &B = *inputs[1];
+        const Tensor<float> &bias = *inputs[2];
         return gemm(A, B, bias, transA, transB, alpha, beta);
     }
     case OpType::Flatten:
     {
         assert(inputs.size() == 1);
-        Tensor<float> tensor = *inputs[0];
+        Tensor<float> &tensor = *inputs[0];
         auto axisOpt = node->getAttribute<int64_t>("axis");
         if (!axisOpt.has_value())
             throw std::runtime_error("Axis missing for flatten operation");
@@ -88,9 +88,9 @@ Tensor<float> InferenceEngine::evaluateNode(const Node *node, std::vector<Tensor
     case OpType::Conv:
     {
         assert(inputs.size() == 3);
-        Tensor<float> X = *inputs[0];
-        Tensor<float> W = *inputs[1];
-        Tensor<float> B = *inputs[2];
+        // Tensor<float>& X = *inputs[0];
+        // Tensor<float>& W = *inputs[1];
+        // Tensor<float>& B = *inputs[2];
         auto dilation = node->getAttribute<std::vector<int64_t>>("dilations");
         if (!dilation.has_value())
             throw std::runtime_error("dilations missing for conv operator");
@@ -132,9 +132,9 @@ std::vector<Tensor<float>> InferenceEngine::prepareNodeInputs(const Node *node)
     return inputs;
 }
 
-std::vector<Tensor<float>*> InferenceEngine::ptrPrepareNodeInputs(const Node *node)
+std::vector<Tensor<float> *> InferenceEngine::ptrPrepareNodeInputs(const Node *node)
 {
-    std::vector<Tensor<float>*> inputs;
+    std::vector<Tensor<float> *> inputs;
     const auto &input_names = node->getInputs();
     inputs.reserve(input_names.size()); // Reserve capacity
 
@@ -154,20 +154,20 @@ void InferenceEngine::applyConstantFolding()
 {
     for (auto node : graph_->getTopologicallySortedNodes())
     {
-        std::vector<Tensor<float>*> inputs;
+        std::vector<Tensor<float> *> inputs;
         try
         {
             inputs = ptrPrepareNodeInputs(node);
             std::cout << "Found constant node, applying constant folding." << std::endl;
         }
-        catch(const std::exception& e)
+        catch (const std::exception &e)
         {
             // not a constant node, skip.
             std::cout << "Skipping node, not constant." << std::endl;
             continue;
         }
         Tensor<float> res = evaluateNode(node, inputs);
-        
+
         // Create constant node with same outputs.
         auto constantNode = std::make_unique<Node>(node->getName(), OpType::Constant);
         constantNode->addOutput(constantNode->getOutputs()[0]);
