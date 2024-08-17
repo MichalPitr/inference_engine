@@ -18,6 +18,7 @@ enum class OpType
     Relu,    // Rectified Linear Unit
     Conv,    // Convolutional Layer
     MaxPool, // Max Pooling Layer
+    Constant, // Constant node
 };
 
 class Node

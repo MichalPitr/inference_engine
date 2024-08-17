@@ -18,8 +18,9 @@ public:
 
 private:
     void applyConstantFolding();
-    Tensor<float> evaluateNode(const Node *node, std::vector<Tensor<float>> inputs);
+    Tensor<float> evaluateNode(const Node *node, std::vector<Tensor<float>*> inputs);
     std::vector<Tensor<float>> prepareNodeInputs(const Node* node);
+    std::vector<Tensor<float>*> ptrPrepareNodeInputs(const Node *node);
 
     std::unique_ptr<Graph> graph_;
     std::unordered_map<std::string, Tensor<float>> weights_;
