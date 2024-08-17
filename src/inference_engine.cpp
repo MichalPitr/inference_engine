@@ -118,7 +118,7 @@ std::vector<Tensor<float>> InferenceEngine::prepareNodeInputs(const Node *node)
 {
     std::vector<Tensor<float>> inputs;
     const auto &input_names = node->getInputs();
-    inputs.reserve(input_names.size()); // Reserve capacity
+    inputs.reserve(input_names.size());
 
     for (const auto &input_name : input_names)
     {
@@ -127,7 +127,7 @@ std::vector<Tensor<float>> InferenceEngine::prepareNodeInputs(const Node *node)
         {
             throw std::runtime_error("Input not found: " + input_name);
         }
-        inputs.push_back(it->second); // Move instead of copy
+        inputs.push_back(it->second);
     }
     return inputs;
 }
@@ -136,7 +136,7 @@ std::vector<Tensor<float> *> InferenceEngine::ptrPrepareNodeInputs(const Node *n
 {
     std::vector<Tensor<float> *> inputs;
     const auto &input_names = node->getInputs();
-    inputs.reserve(input_names.size()); // Reserve capacity
+    inputs.reserve(input_names.size());
 
     for (const auto &input_name : input_names)
     {
@@ -145,7 +145,7 @@ std::vector<Tensor<float> *> InferenceEngine::ptrPrepareNodeInputs(const Node *n
         {
             throw std::runtime_error("Input not found: " + input_name);
         }
-        inputs.push_back(&it->second); // Store pointer
+        inputs.push_back(&it->second);
     }
     return inputs;
 }
