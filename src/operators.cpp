@@ -3,6 +3,7 @@
 #include <assert.h>
 
 #include "gemm.h"
+#include "gemm_cuda.h"
 #include "operators.h"
 
 // Returns a Tensor containing the result of A*B + bias
@@ -51,8 +52,15 @@ Tensor<T> gemm(const Tensor<T>& A, const Tensor<T>& B, const Tensor<T>& bias,
     const T* AData = A.raw_data();
     const T* BData = B.raw_data();
     const T* BiasData = bias.raw_data();
+    
+    // TODO: add mechanism to detect if CUDA is supported at startup.
+    // Currently slower for smaller number of iterations. Probably inefficient transfer?
+    if (true) {
+        gemm_cuda(AData, BData, BiasData, outData.data(), N, M, K, transA, transB, alpha, beta);
+    } else {
+        gemm(AData, BData, BiasData, outData.data(), N, M, K, transA, transB, alpha, beta);
+    }
 
-    gemm(AData, BData, BiasData, outData.data(), N, M, K, transA, transB, alpha, beta);
     Tensor<T> result = Tensor<T>(outData, dims);
     return result;
 }

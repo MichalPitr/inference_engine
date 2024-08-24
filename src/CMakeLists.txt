@@ -5,6 +5,7 @@ PROTOBUF_GENERATE_CPP(PROTO_SRCS PROTO_HDRS onnx-ml.proto)
 # Add an executable
 add_library(engine_lib
     gemm.cpp
+    gemm_cuda.cu
     attribute.cpp
     tensor.cpp
     input_loader.cpp
@@ -25,4 +26,5 @@ target_include_directories(engine_lib PUBLIC
 target_link_libraries(engine_lib PUBLIC ${PROTOBUF_LIBRARIES})
 
 add_executable(engine_exe main.cpp)
+
 target_link_libraries(engine_exe PRIVATE engine_lib)
