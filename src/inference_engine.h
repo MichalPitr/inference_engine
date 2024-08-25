@@ -21,7 +21,7 @@ class InferenceEngine {
     void registerOperators();
     Tensor<float> evaluateNode(const Node* node,
                                const std::vector<Tensor<float>*>& inputs);
-    std::vector<Tensor<float>*> ptrPrepareNodeInputs(const Node* node);
+    std::vector<Tensor<float>*> prepareNodeInputs(const Node* node);
 
     OperatorRegistry<float> registry_;
     std::unique_ptr<Graph> graph_;

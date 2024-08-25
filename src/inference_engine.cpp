@@ -16,13 +16,11 @@ InferenceEngine::InferenceEngine(
     registerOperators();
 }
 
-void InferenceEngine::applyOptimizations() { applyConstantFolding(); }
-
 Tensor<float> InferenceEngine::infer(const Tensor<float> &input) {
     weights_[graph_->getInputName(0)] = input;
 
     for (const auto node : graph_->getTopologicallySortedNodes()) {
-        auto inputs = ptrPrepareNodeInputs(node);
+        auto inputs = prepareNodeInputs(node);
         Tensor<float> output = evaluateNode(node, inputs);
 
         if (output.size() != 0) {
@@ -46,7 +44,7 @@ Tensor<float> InferenceEngine::evaluateNode(
     return registry_.executeOperator(node, inputs);
 }
 
-std::vector<Tensor<float> *> InferenceEngine::ptrPrepareNodeInputs(
+std::vector<Tensor<float> *> InferenceEngine::prepareNodeInputs(
     const Node *node) {
     std::vector<Tensor<float> *> inputs;
     const auto &input_names = node->getInputs();
@@ -62,11 +60,13 @@ std::vector<Tensor<float> *> InferenceEngine::ptrPrepareNodeInputs(
     return inputs;
 }
 
+void InferenceEngine::applyOptimizations() { applyConstantFolding(); }
+
 void InferenceEngine::applyConstantFolding() {
     for (auto node : graph_->getTopologicallySortedNodes()) {
         std::vector<Tensor<float> *> inputs;
         try {
-            inputs = ptrPrepareNodeInputs(node);
+            inputs = prepareNodeInputs(node);
             std::cout << "Found constant node, applying constant folding."
                       << std::endl;
         } catch (const std::exception &e) {
@@ -118,8 +118,8 @@ void InferenceEngine::registerOperators() {
         });
 
     registry_.registerOperator(
-        OpType::Relu,
-        [](const Node *node, const std::vector<Tensor<float> *> &inputs) {
+        OpType::Relu, []([[maybe_unused]] const Node *node,
+                         const std::vector<Tensor<float> *> &inputs) {
             if (inputs.size() != 1) {
                 throw std::runtime_error("Relu operation expects 1 input");
             }
@@ -127,8 +127,8 @@ void InferenceEngine::registerOperators() {
         });
 
     registry_.registerOperator(
-        OpType::Add,
-        [](const Node *node, const std::vector<Tensor<float> *> &inputs) {
+        OpType::Add, []([[maybe_unused]] const Node *node,
+                        const std::vector<Tensor<float> *> &inputs) {
             if (inputs.size() != 2) {
                 throw std::runtime_error("Add operation expects 2 inputs");
             }
