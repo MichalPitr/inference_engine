@@ -10,6 +10,7 @@ add_library(engine_lib
     tensor.cpp
     input_loader.cpp
     operators.cpp
+    operator_registry.cpp
     graph.cpp
     node.cpp
     onnx_helper.cpp

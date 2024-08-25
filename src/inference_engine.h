@@ -6,6 +6,7 @@
 #include <unordered_map>
 
 #include "graph.h"
+#include "operator_registry.h"
 #include "tensor.h"
 
 class InferenceEngine {
@@ -17,10 +18,12 @@ class InferenceEngine {
 
    private:
     void applyConstantFolding();
+    void registerOperators();
     Tensor<float> evaluateNode(const Node* node,
                                const std::vector<Tensor<float>*>& inputs);
     std::vector<Tensor<float>*> ptrPrepareNodeInputs(const Node* node);
 
+    OperatorRegistry<float> registry_;
     std::unique_ptr<Graph> graph_;
     std::unordered_map<std::string, Tensor<float>> weights_;
 };
