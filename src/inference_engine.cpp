@@ -24,24 +24,22 @@ Tensor<float> InferenceEngine::infer(const Tensor<float> &input) {
         Tensor<float> output = evaluateNode(node, inputs);
 
         if (output.size() != 0) {
-            weights_[node->getOutputs()[0]] = output;
+            weights_[node->getOutputs()[0]] = std::move(output);
         } else {
-            throw std::runtime_error(
-                "Got nullptr output after inference loop.");
+            throw std::runtime_error("Got empty output after inference loop.");
         }
     }
 
-    std::string graph_output = graph_->getOutputName(0);
-    if (weights_.find(graph_output) == weights_.end()) {
+    const auto &graph_output = graph_->getOutputName(0);
+    auto it = weights_.find(graph_output);
+    if (it == weights_.end()) {
         throw std::runtime_error("Output not found: " + graph_output);
     }
 
-    return weights_[graph_output];
+    return it->second;
 }
-
 Tensor<float> InferenceEngine::evaluateNode(
-    const Node *node, const std::vector<Tensor<float> *> inputs) {
-    const auto op_type = node->getOpType();
+    const Node *node, const std::vector<Tensor<float> *> &inputs) {
     switch (node->getOpType()) {
         case OpType::Gemm: {
             float alpha = node->getAttribute<float>("alpha").value_or(1.0);
@@ -49,31 +47,39 @@ Tensor<float> InferenceEngine::evaluateNode(
             int transA = node->getAttribute<int64_t>("transA").value_or(0);
             int transB = node->getAttribute<int64_t>("transB").value_or(0);
 
-            assert(inputs.size() == 3);
+            if (inputs.size() != 3) {
+                throw std::runtime_error("Gemm operation expects 3 inputs");
+            }
             const Tensor<float> &A = *inputs[0];
             const Tensor<float> &B = *inputs[1];
             const Tensor<float> &bias = *inputs[2];
             return gemm(A, B, bias, transA, transB, alpha, beta);
         }
         case OpType::Flatten: {
-            assert(inputs.size() == 1);
-            Tensor<float> &tensor = *inputs[0];
+            if (inputs.size() != 1) {
+                throw std::runtime_error("Flatten operation expects 1 input");
+            }
             auto axisOpt = node->getAttribute<int64_t>("axis");
-            if (!axisOpt.has_value())
+            if (!axisOpt) {
                 throw std::runtime_error("Axis missing for flatten operation");
-            return flatten(tensor, axisOpt.value());
+            }
+            return flatten(*inputs[0], axisOpt.value());
         }
         case OpType::Relu: {
-            assert(inputs.size() == 1);
+            if (inputs.size() != 1) {
+                throw std::runtime_error("Relu operation expects 1 input");
+            }
             return relu(*inputs[0]);
         }
         case OpType::Add: {
-            assert(inputs.size() == 2);
+            if (inputs.size() != 2) {
+                throw std::runtime_error("Add operation expects 2 inputs");
+            }
             return add(*inputs[0], *inputs[1]);
         }
         default:
-            throw std::runtime_error("Op_type no supported: " +
-                                     op_type_to_string(op_type));
+            throw std::runtime_error("Unsupported op_type: " +
+                                     op_type_to_string(node->getOpType()));
     }
 }
 

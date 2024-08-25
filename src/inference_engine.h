@@ -18,7 +18,7 @@ class InferenceEngine {
    private:
     void applyConstantFolding();
     Tensor<float> evaluateNode(const Node* node,
-                               const std::vector<Tensor<float>*> inputs);
+                               const std::vector<Tensor<float>*>& inputs);
     std::vector<Tensor<float>*> ptrPrepareNodeInputs(const Node* node);
 
     std::unique_ptr<Graph> graph_;

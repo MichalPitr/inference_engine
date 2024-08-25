@@ -17,9 +17,11 @@ int main(int argc, char** argv) {
     try {
         ModelLoader loader;
         auto engine = loader.load(modelFile);
-        auto input = load_input(inputFile);
-        auto output = engine->infer(input);
-        std::cout << "Out: " << output.to_string() << "\n";
+        for (int i = 0; i <= 1000; ++i) {
+            auto input = load_input(inputFile);
+            auto output = engine->infer(input);
+            std::cout << "Out: " << output.to_string() << "\n";
+        }
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << std::endl;
         return 1;
