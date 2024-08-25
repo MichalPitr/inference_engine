@@ -29,7 +29,7 @@ int main(int argc, char** argv) {
               << std::endl;
     std::cout << "Batch size: " << config.get_batch_size() << std::endl;
 
-    auto engine = loader.load(config.get_model_path());
+    auto engine = loader.load(config);
     auto input = load_input(inputFile);
     auto output = engine->infer(input);
     std::cout << "Out: " << output.to_string() << "\n";

@@ -3,10 +3,10 @@ model_format: onnx
 execution_provider: CPU
 batch_size: 1
 inputs:
-  - name: input1
+  - name: "onnx::Flatten_0"
     shape: [1, 1, 28, 28]
     data_type: FLOAT32
 outputs:
-  - name: output1
+  - name: "21"
     shape: [1, 10]
     data_type: FLOAT32

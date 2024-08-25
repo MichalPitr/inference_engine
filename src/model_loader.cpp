@@ -6,14 +6,14 @@
 #include "graph.h"
 #include "node.h"
 
-std::unique_ptr<InferenceEngine> ModelLoader::load(
-    const std::string& modelFile) {
+std::unique_ptr<InferenceEngine> ModelLoader::load(const ModelConfig& config) {
     onnx::ModelProto model;
     {
-        std::ifstream input(modelFile, std::ios::binary);
+        std::ifstream input(config.get_model_path(), std::ios::binary);
         if (!input || !model.ParseFromIstream(&input)) {
             throw std::runtime_error(
-                "Failed to load or parse the ONNX model: " + modelFile);
+                "Failed to load or parse the ONNX model: " +
+                config.get_model_path());
         }
     }
 
@@ -21,10 +21,45 @@ std::unique_ptr<InferenceEngine> ModelLoader::load(
         throw std::runtime_error("Invalid ONNX model: missing graph or nodes");
     }
 
+    validate_model(model, config);
+
     auto weights = load_weights(model);
     auto graph = std::make_unique<Graph>(model.graph());
     return std::make_unique<InferenceEngine>(std::move(graph),
                                              std::move(weights));
+}
+
+void ModelLoader::validate_model(const onnx::ModelProto& model,
+                                 const ModelConfig& config) {
+    if ((std::size_t)model.graph().input_size() != config.get_inputs().size()) {
+        throw std::runtime_error(
+            "Mismatch in number of inputs between model and config");
+    }
+    for (int i = 0; i < model.graph().input_size(); ++i) {
+        const auto& model_input = model.graph().input(i);
+        const auto& config_input = config.get_inputs()[i];
+        if (model_input.name() != config_input.name) {
+            throw std::runtime_error(
+                "Mismatch in input names between model and config. Got: " +
+                model_input.name() + ", but expected: " + config_input.name);
+        }
+    }
+
+    if ((std::size_t)model.graph().output_size() !=
+        config.get_outputs().size()) {
+        throw std::runtime_error(
+            "Mismatch in number of outputs between model and config");
+    }
+
+    for (int i = 0; i < model.graph().output_size(); ++i) {
+        const auto& model_output = model.graph().output(i);
+        const auto& config_output = config.get_outputs()[i];
+        if (model_output.name() != config_output.name) {
+            throw std::runtime_error(
+                "Mismatch in output names between model and config. Got: " +
+                model_output.name() + ", but expected: " + config_output.name);
+        }
+    }
 }
 
 std::unordered_map<std::string, Tensor<float>> ModelLoader::load_weights(

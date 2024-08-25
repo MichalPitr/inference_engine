@@ -6,13 +6,16 @@
 #include <unordered_map>
 
 #include "inference_engine.h"
+#include "model_config.h"
 
 class ModelLoader {
    public:
-    std::unique_ptr<InferenceEngine> load(const std::string& modelFile);
+    std::unique_ptr<InferenceEngine> load(const ModelConfig& config);
 
    private:
-    static std::unordered_map<std::string, Tensor<float>> load_weights(
+    void validate_model(const onnx::ModelProto& model,
+                        const ModelConfig& config);
+    std::unordered_map<std::string, Tensor<float>> load_weights(
         const onnx::ModelProto& model);
 };
 
