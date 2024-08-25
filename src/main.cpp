@@ -6,18 +6,11 @@
 #include "model_loader.h"
 
 int main(int argc, char** argv) {
-    if (argc != 2) {
-        std::cerr << "Usage: " << argv[0] << " <config.yaml>" << std::endl;
+    if (argc != 3) {
+        std::cerr << "Usage: " << argv[0] << " <config.yaml> <input.ubyte>"
+                  << std::endl;
         return 1;
     }
-
-    // TODO: implement a simple http/grpc server that can receive inputs in
-    // byte64 format, do some naive online batching, and passes the mini batch
-    // to the inference engine.
-    // This will make usage a lot nicer and more practical. Disadvantage is
-    // complexities of simulating load on the server.
-    std::string inputFile =
-        "/home/michal/code/inference_engine/inputs/image_0.ubyte";
 
     ModelConfig config(argv[1]);
     ModelLoader loader;
@@ -30,7 +23,7 @@ int main(int argc, char** argv) {
     std::cout << "Batch size: " << config.get_batch_size() << std::endl;
 
     auto engine = loader.load(config);
-    auto input = load_input(inputFile);
+    auto input = load_input(argv[2]);
     auto output = engine->infer(input);
     std::cout << "Out: " << output.to_string() << "\n";
 

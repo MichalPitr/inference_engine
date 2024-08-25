@@ -1,6 +1,6 @@
 # C++ Inference Engine from scratch
 
-This is a project I built to learn more about inference engines and C++. You can learn more about this project in a [blog post](https://michalpitr.substack.com/p/build-your-own-inference-engine-from) I wrote about it!
+I am developing this project to learn C++ and get hands-on experience with inference engines.
 
 ## How to build
 
@@ -11,8 +11,26 @@ This is a project I built to learn more about inference engines and C++. You can
 5. `cmake ..`
 6. `make .`
 
-CMake will complain if you are missing some system dependencies: protobuf, gtest, google benchmark.
+CMake will complain if you are missing some system dependencies: protobuf, gtest, google benchmark, yaml-cpp
 
-## Run inference
+## Run inference with a sample image
 
-`/<path>/inference_engine/build/src/engine_exe /<path>/inference_engine/models/mnist_ffn_complex.onnx /<path>/inference_engine/inputs/<image>`
+`/${project_root}/build/src/engine_exe ${project_root}/model_repository/mnist.yaml ${project_root}/inputs/image_0.ubyte`
+
+## Backlog:
+
+* Implement server for receiving base64 encoded inputs.
+* Implement online batching for server-received requests.
+* Add CUDA execution provider.
+* Add graph optimizations.
+
+## Contributing
+
+This project wasn't designed with the idea of external contributions but if you fancy, improvements are welcome!
+
+## Blog posts
+
+I enjoy writing technical blog posts and I've written some about this project:
+
+* [Initial design](https://michalpitr.substack.com/p/build-your-own-inference-engine-from)
+* [Profiling-driven optimizations](https://michalpitr.substack.com/p/inference-engine-optimizing-performance)
