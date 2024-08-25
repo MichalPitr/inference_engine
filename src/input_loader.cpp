@@ -9,7 +9,7 @@
 
 Tensor<float> load_input(const std::string& filename) {
     std::ifstream file(filename, std::ios::binary);
-    if(!file.is_open()) {
+    if (!file.is_open()) {
         throw std::runtime_error("Error opening file: " + filename);
     }
 
@@ -19,7 +19,7 @@ Tensor<float> load_input(const std::string& filename) {
     file.read(reinterpret_cast<char*>(bytes.data()), bytes.size());
 
     std::vector<float> floatValues(bytes.size());
-    for(size_t i = 0; i < bytes.size(); ++i) {
+    for (size_t i = 0; i < bytes.size(); ++i) {
         floatValues[i] = static_cast<float>(bytes[i]);
     }
 

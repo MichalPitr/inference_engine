@@ -11,13 +11,13 @@ std::vector<float> reinterpret_string_to_float(const std::string &str);
 std::unique_ptr<InferenceEngine> ModelLoader::load(
     const std::string &modelFile) {
     std::ifstream input(modelFile, std::ios::binary);
-    if(!input.is_open()) {
+    if (!input.is_open()) {
         throw std::runtime_error("Failed to open the ONNX model file: " +
                                  modelFile);
     }
 
     onnx::ModelProto model;
-    if(!model.ParseFromIstream(&input)) {
+    if (!model.ParseFromIstream(&input)) {
         throw std::runtime_error("Failed to parse the ONNX model");
     }
 
@@ -32,7 +32,7 @@ std::unique_ptr<InferenceEngine> ModelLoader::load(
 }
 
 void ModelLoader::validate_model(const onnx::ModelProto &model) {
-    if(!model.has_graph() || model.graph().node_size() == 0) {
+    if (!model.has_graph() || model.graph().node_size() == 0) {
         throw std::runtime_error("Invalid ONNX model: missing graph or nodes");
     }
 }
@@ -40,8 +40,8 @@ void ModelLoader::validate_model(const onnx::ModelProto &model) {
 std::unordered_map<std::string, Tensor<float>> ModelLoader::load_weights(
     const onnx::ModelProto &model) {
     std::unordered_map<std::string, Tensor<float>> weights;
-    for(const auto &initializer : model.graph().initializer()) {
-        if(initializer.data_type() != onnx::TensorProto::FLOAT) {
+    for (const auto &initializer : model.graph().initializer()) {
+        if (initializer.data_type() != onnx::TensorProto::FLOAT) {
             throw std::runtime_error("Unsupported initializer data type");
         }
 
@@ -56,7 +56,7 @@ std::unordered_map<std::string, Tensor<float>> ModelLoader::load_weights(
 }
 
 std::vector<float> reinterpret_string_to_float(const std::string &str) {
-    if(str.size() % sizeof(float) != 0) {
+    if (str.size() % sizeof(float) != 0) {
         throw std::runtime_error(
             "String size is not a multiple of sizeof(float)");
     }

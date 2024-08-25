@@ -7,7 +7,7 @@
 #include "tensor.h"
 
 int main(int argc, char **argv) {
-    if(argc != 3) {
+    if (argc != 3) {
         std::cerr << "Usage: " << argv[0] << " <model.onnx> <input.data>"
                   << std::endl;
         return 1;
@@ -21,9 +21,9 @@ int main(int argc, char **argv) {
 
     std::string file = "/home/michal/code/inference_engine/inputs/image_";
     // Rerun 100 times.
-    for(int j = 0; j < 5; ++j) {
+    for (int j = 0; j < 5; ++j) {
         // 100 Sequential inference requests.
-        for(int i = 0; i < 100; ++i) {
+        for (int i = 0; i < 100; ++i) {
             std::ostringstream oss;
             oss << file << i << ".ubyte";
             std::string formattedString = oss.str();

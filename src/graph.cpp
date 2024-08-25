@@ -2,17 +2,17 @@
 
 Graph::Graph(const onnx::GraphProto& graphProto) {
     nodeMap_.reserve(graphProto.node_size());
-    for(const auto& nodeProto : graphProto.node()) {
+    for (const auto& nodeProto : graphProto.node()) {
         addNode(std::make_unique<Node>(nodeProto));
     }
 
     inputs_.reserve(graphProto.input_size());
-    for(const auto& inputProto : graphProto.input()) {
+    for (const auto& inputProto : graphProto.input()) {
         inputs_.push_back(inputProto.name());
     }
 
     outputs_.reserve(graphProto.output_size());
-    for(const auto& outputProto : graphProto.output()) {
+    for (const auto& outputProto : graphProto.output()) {
         outputs_.push_back(outputProto.name());
     }
 }
@@ -31,11 +31,11 @@ void Graph::updateEdges(Node* node) {
 }
 
 void Graph::addIncomingEdges(Node* node) {
-    for(const auto& inputName : node->getInputs()) {
-        for(auto& [_, info] : nodeMap_) {
-            if(std::find(info.node->getOutputs().begin(),
-                         info.node->getOutputs().end(),
-                         inputName) != info.node->getOutputs().end()) {
+    for (const auto& inputName : node->getInputs()) {
+        for (auto& [_, info] : nodeMap_) {
+            if (std::find(info.node->getOutputs().begin(),
+                          info.node->getOutputs().end(),
+                          inputName) != info.node->getOutputs().end()) {
                 info.children.push_back(node);
                 nodeMap_[node->getName()].parents.push_back(info.node.get());
             }
@@ -44,11 +44,11 @@ void Graph::addIncomingEdges(Node* node) {
 }
 
 void Graph::addOutgoingEdges(Node* node) {
-    for(const auto& outputName : node->getOutputs()) {
-        for(auto& [_, info] : nodeMap_) {
-            if(std::find(info.node->getInputs().begin(),
-                         info.node->getInputs().end(),
-                         outputName) != info.node->getInputs().end()) {
+    for (const auto& outputName : node->getOutputs()) {
+        for (auto& [_, info] : nodeMap_) {
+            if (std::find(info.node->getInputs().begin(),
+                          info.node->getInputs().end(),
+                          outputName) != info.node->getInputs().end()) {
                 nodeMap_[node->getName()].children.push_back(info.node.get());
                 info.parents.push_back(node);
             }
@@ -73,21 +73,21 @@ const std::string& Graph::getOutputName(std::size_t index) const {
 }
 
 std::vector<Node*> Graph::getTopologicallySortedNodes() {
-    if(!sortedNodes_.empty()) {
+    if (!sortedNodes_.empty()) {
         return sortedNodes_;
     }
 
     std::unordered_set<Node*> visited;
     std::stack<Node*> stack;
 
-    for(const auto& [_, info] : nodeMap_) {
-        if(info.parents.empty() || isInputNode(info.node.get())) {
+    for (const auto& [_, info] : nodeMap_) {
+        if (info.parents.empty() || isInputNode(info.node.get())) {
             topologicalSortUtil(info.node.get(), visited, stack);
         }
     }
 
     sortedNodes_.reserve(stack.size());
-    while(!stack.empty()) {
+    while (!stack.empty()) {
         sortedNodes_.push_back(stack.top());
         stack.pop();
     }
@@ -107,8 +107,8 @@ void Graph::topologicalSortUtil(Node* node, std::unordered_set<Node*>& visited,
                                 std::stack<Node*>& stack) {
     visited.insert(node);
 
-    for(Node* child : nodeMap_[node->getName()].children) {
-        if(visited.find(child) == visited.end()) {
+    for (Node* child : nodeMap_[node->getName()].children) {
+        if (visited.find(child) == visited.end()) {
             topologicalSortUtil(child, visited, stack);
         }
     }
@@ -117,9 +117,9 @@ void Graph::topologicalSortUtil(Node* node, std::unordered_set<Node*>& visited,
 }
 
 void Graph::printGraph() const {
-    for(const auto& [name, info] : nodeMap_) {
+    for (const auto& [name, info] : nodeMap_) {
         std::cout << "Node " << name << ": \n";
-        for(const auto& child : info.children) {
+        for (const auto& child : info.children) {
             std::cout << "    child " << child->getName() << "\n";
         }
     }

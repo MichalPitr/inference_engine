@@ -12,7 +12,7 @@ Node::Node(const onnx::NodeProto &nodeProto)
       opType(onnxOpTypeConverter(nodeProto.op_type())),
       inputs(nodeProto.input().begin(), nodeProto.input().end()),
       outputs(nodeProto.output().begin(), nodeProto.output().end()) {
-    for(const auto &attrProto : nodeProto.attribute()) {
+    for (const auto &attrProto : nodeProto.attribute()) {
         attributes.emplace(attrProto.name(), Attribute(attrProto));
     }
 }
@@ -32,26 +32,26 @@ void Node::addOutput(std::string output) { outputs.push_back(output); }
 template <typename T>
 std::optional<T> Node::getAttribute(const std::string &name) const {
     auto it = attributes.find(name);
-    if(it != attributes.end() &&
-       std::holds_alternative<T>(it->second.getValue())) {
+    if (it != attributes.end() &&
+        std::holds_alternative<T>(it->second.getValue())) {
         return std::get<T>(it->second.getValue());
     }
     return std::nullopt;
 }
 
 OpType onnxOpTypeConverter(const std::string opType) {
-    if(opType == "Gemm") {
+    if (opType == "Gemm") {
         return OpType::Gemm;
     }
-    if(opType == "Add") {
+    if (opType == "Add") {
         return OpType::Add;
-    } else if(opType == "Relu") {
+    } else if (opType == "Relu") {
         return OpType::Relu;
-    } else if(opType == "Flatten") {
+    } else if (opType == "Flatten") {
         return OpType::Flatten;
-    } else if(opType == "Conv") {
+    } else if (opType == "Conv") {
         return OpType::Conv;
-    } else if(opType == "MaxPool") {
+    } else if (opType == "MaxPool") {
         return OpType::MaxPool;
     }
 

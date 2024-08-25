@@ -69,13 +69,13 @@
         "variant": "cpp",
         "stack": "cpp"
     },
-        "cmake.debugConfig": {
-            "args": [
-                "/home/michal/code/inference_engine/models/mnist_ffn_complex.onnx",
-                "/home/michal/code/inference_engine/inputs/image_0.ubyte",
-            ]
-        },
-        "C_Cpp.default.compilerPath": "/usr/bin/clang++",
-        "C_Cpp.clang_format_fallbackStyle": "Google"
+    "cmake.debugConfig": {
+        "args": [
+            "/home/michal/code/inference_engine/models/mnist_ffn_complex.onnx",
+            "/home/michal/code/inference_engine/inputs/image_0.ubyte",
+        ]
+    },
+    "C_Cpp.default.compilerPath": "/usr/bin/clang++",
+    "C_Cpp.clang_format_fallbackStyle": "Google",
+    "editor.formatOnSave": true,
 }
-

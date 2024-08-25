@@ -2,7 +2,7 @@
 
 Attribute::Attribute(const onnx::AttributeProto &attrProto)
     : name(attrProto.name()) {
-    switch(attrProto.type()) {
+    switch (attrProto.type()) {
         case onnx::AttributeProto::INT: {
             value = attrProto.i();
             break;
@@ -13,7 +13,7 @@ Attribute::Attribute(const onnx::AttributeProto &attrProto)
         }
         case onnx::AttributeProto::INTS: {
             std::vector<int64_t> ints(attrProto.ints_size());
-            for(int i = 0; i < attrProto.ints_size(); ++i) {
+            for (int i = 0; i < attrProto.ints_size(); ++i) {
                 ints[i] = attrProto.ints(i);
             }
             value = ints;

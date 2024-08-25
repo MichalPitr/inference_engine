@@ -1,9 +1,11 @@
-Language: Cpp
+# Use Google style as the base
 BasedOnStyle: Google
-IndentWidth: 4
-MaxEmptyLinesToKeep: 1
-NamespaceIndentation: All
-ColumnLimit: 80
-PenaltyBreakAssignment: 2
-PenaltyReturnTypeOnItsOwnLine: 200
-SpaceBeforeParens: Never
+
+# Override specific rules
+IndentWidth: 4               # Use 4 spaces for indentation
+PointerAlignment: Left        # Left-align pointer and reference symbols
+
+# Additional rules can be added if necessary
+Language:        Cpp          # Set the language as C++ (this should also apply to CUDA)
+TabWidth:        4            # Ensure tabs are 4 spaces wide
+UseTab:          Never        # Use spaces instead of tabs

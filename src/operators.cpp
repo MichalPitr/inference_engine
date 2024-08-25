@@ -13,8 +13,8 @@ template <typename T>
 Tensor<T> gemm(const Tensor<T>& A, const Tensor<T>& B, const Tensor<T>& bias,
                const bool transA, const bool transB, const float alpha,
                const float beta) {
-    if(A.shape().size() != 2 || B.shape().size() != 2 ||
-       bias.shape().size() == 0) {
+    if (A.shape().size() != 2 || B.shape().size() != 2 ||
+        bias.shape().size() == 0) {
         std::cerr << "A dims: " << A.shape().size() << " B dims "
                   << B.shape().size() << " C dims " << bias.shape().size()
                   << std::endl;
@@ -24,25 +24,25 @@ Tensor<T> gemm(const Tensor<T>& A, const Tensor<T>& B, const Tensor<T>& bias,
 
         throw std::invalid_argument("Invalid dimensions for Gemm inputs.");
     }
-    if(!transA && !transB && A.shape()[1] != B.shape()[0]) {
+    if (!transA && !transB && A.shape()[1] != B.shape()[0]) {
         std::cerr << "A.shape: " << A.stringShape() << std::endl;
         std::cerr << "B.shape: " << B.stringShape() << std::endl;
         throw std::invalid_argument(
             "Matrix dimensions are not compatible for multiplication in Gemm.");
     }
-    if(transA && !transB && A.shape()[0] != B.shape()[0]) {
+    if (transA && !transB && A.shape()[0] != B.shape()[0]) {
         std::cerr << "A.shape: " << A.stringShape() << std::endl;
         std::cerr << "B.shape: " << B.stringShape() << std::endl;
         throw std::invalid_argument(
             "Matrix dimensions are not compatible for multiplication in Gemm.");
     }
-    if(transB && !transA && A.shape()[1] != B.shape()[1]) {
+    if (transB && !transA && A.shape()[1] != B.shape()[1]) {
         std::cerr << "A.shape: " << A.stringShape() << std::endl;
         std::cerr << "B.shape: " << B.stringShape() << std::endl;
         throw std::invalid_argument(
             "Matrix dimensions are not compatible for multiplication in Gemm.");
     }
-    if(transA && transB && A.shape()[0] != B.shape()[1]) {
+    if (transA && transB && A.shape()[0] != B.shape()[1]) {
         std::cerr << "A.shape: " << A.stringShape() << std::endl;
         std::cerr << "B.shape: " << B.stringShape() << std::endl;
         throw std::invalid_argument(
@@ -65,7 +65,7 @@ Tensor<T> gemm(const Tensor<T>& A, const Tensor<T>& B, const Tensor<T>& bias,
     // TODO: add mechanism to detect if CUDA is supported at startup.
     // Currently slower for smaller number of iterations. Probably inefficient
     // transfer?
-    if(true) {
+    if (true) {
         gemm_cuda(AData, BData, BiasData, outData.data(), N, M, K, transA,
                   transB, alpha, beta);
     } else {
@@ -84,12 +84,12 @@ Tensor<T> flatten(Tensor<T>& tensor, uint64_t axis) {
     assert(axis <= tensor.shape().size());
 
     uint64_t dimBefore = 1;
-    for(std::size_t i = 0; i < axis; ++i) {
+    for (std::size_t i = 0; i < axis; ++i) {
         dimBefore *= tensor.shape()[i];
     }
 
     uint64_t dimAfter = 1;
-    for(std::size_t i = axis; i < tensor.shape().size(); ++i) {
+    for (std::size_t i = axis; i < tensor.shape().size(); ++i) {
         dimAfter *= tensor.shape()[i];
     }
 
@@ -105,7 +105,7 @@ template <typename T>
 Tensor<T> relu(Tensor<T>& tensor) {
     Tensor<T> output(tensor);
     T* raw = output.raw_data();
-    for(std::size_t i = 0; i < output.size(); ++i) {
+    for (std::size_t i = 0; i < output.size(); ++i) {
         raw[i] = std::max(0.0f, raw[i]);
     }
 
@@ -118,7 +118,7 @@ Tensor<T> add(Tensor<T>& A, Tensor<T>& B) {
     Tensor<T> output(A);
     T* raw = output.raw_data();
     T* b_raw = B.raw_data();
-    for(std::size_t i = 0; i < output.size(); ++i) {
+    for (std::size_t i = 0; i < output.size(); ++i) {
         raw[i] += b_raw[i];
     }
 

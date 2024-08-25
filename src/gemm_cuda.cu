@@ -8,10 +8,10 @@ __global__ void gemm_kernel(const float *A, const float *B, const float *bias,
     int row = blockIdx.y * blockDim.y + threadIdx.y;
     int col = blockIdx.x * blockDim.x + threadIdx.x;
 
-    if(row < n && col < k) {
+    if (row < n && col < k) {
         float res = 0.0f;
 
-        for(int i = 0; i < m; ++i) {
+        for (int i = 0; i < m; ++i) {
             float aVal = transA ? A[i * n + row] : A[row * m + i];
             float bVal = transB ? B[col * m + i] : B[i * k + col];
             res += aVal * bVal;

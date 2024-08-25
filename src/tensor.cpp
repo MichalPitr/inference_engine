@@ -10,7 +10,7 @@ Tensor<T>::Tensor(const std::vector<T> &data,
     : data_(data), shape_(shape) {
     uint64_t expectedSize = std::accumulate(shape.begin(), shape.end(), 1,
                                             std::multiplies<uint64_t>());
-    if(data_.size() != expectedSize) {
+    if (data_.size() != expectedSize) {
         throw std::invalid_argument(
             "Data size does not match the specified shape.");
     }
@@ -44,7 +44,7 @@ void Tensor<T>::setShape(const std::vector<uint64_t> &shape) {
 template <typename T>
 std::string Tensor<T>::stringShape() const {
     std::string msg{"("};
-    for(std::size_t i{0}; i < shape().size() - 1; ++i) {
+    for (std::size_t i{0}; i < shape().size() - 1; ++i) {
         msg += std::to_string(shape()[i]) + ", ";
     }
     msg += std::to_string(shape()[shape().size() - 1]) + ")";
@@ -60,19 +60,19 @@ std::string Tensor<T>::to_string() const {
     size_t numDims = shape.size();
     size_t flatIndex = 0;
 
-    for(size_t i = 0; i < numDims; ++i) {
+    for (size_t i = 0; i < numDims; ++i) {
         oss << "[";
-        if(shape[i] == 1) {
+        if (shape[i] == 1) {
             continue;
         }
-        for(size_t j = 0; j < shape[i]; ++j) {
+        for (size_t j = 0; j < shape[i]; ++j) {
             oss << data_[flatIndex++];
-            if(j < shape[i] - 1) {
+            if (j < shape[i] - 1) {
                 oss << ", ";
             }
         }
         oss << "]";
-        if(i < numDims - 1) {
+        if (i < numDims - 1) {
             oss << ",\n ";
         }
     }

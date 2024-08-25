@@ -19,11 +19,11 @@ void InferenceEngine::applyOptimizations() { applyConstantFolding(); }
 Tensor<float> InferenceEngine::infer(const Tensor<float> &input) {
     weights_[graph_->getInputName(0)] = input;
 
-    for(const auto node : graph_->getTopologicallySortedNodes()) {
+    for (const auto node : graph_->getTopologicallySortedNodes()) {
         auto inputs = ptrPrepareNodeInputs(node);
         Tensor<float> output = evaluateNode(node, inputs);
 
-        if(output.size() != 0) {
+        if (output.size() != 0) {
             weights_[node->getOutputs()[0]] = output;
         } else {
             throw std::runtime_error(
@@ -32,7 +32,7 @@ Tensor<float> InferenceEngine::infer(const Tensor<float> &input) {
     }
 
     std::string graph_output = graph_->getOutputName(0);
-    if(weights_.find(graph_output) == weights_.end()) {
+    if (weights_.find(graph_output) == weights_.end()) {
         throw std::runtime_error("Output not found: " + graph_output);
     }
 
@@ -42,7 +42,7 @@ Tensor<float> InferenceEngine::infer(const Tensor<float> &input) {
 Tensor<float> InferenceEngine::evaluateNode(
     const Node *node, const std::vector<Tensor<float> *> inputs) {
     const auto op_type = node->getOpType();
-    switch(node->getOpType()) {
+    switch (node->getOpType()) {
         case OpType::Gemm: {
             float alpha = node->getAttribute<float>("alpha").value_or(1.0);
             float beta = node->getAttribute<float>("beta").value_or(1.0);
@@ -59,7 +59,7 @@ Tensor<float> InferenceEngine::evaluateNode(
             assert(inputs.size() == 1);
             Tensor<float> &tensor = *inputs[0];
             auto axisOpt = node->getAttribute<int64_t>("axis");
-            if(!axisOpt.has_value())
+            if (!axisOpt.has_value())
                 throw std::runtime_error("Axis missing for flatten operation");
             return flatten(tensor, axisOpt.value());
         }
@@ -78,22 +78,22 @@ Tensor<float> InferenceEngine::evaluateNode(
             // Tensor<float>& B = *inputs[2];
             auto dilation =
                 node->getAttribute<std::vector<int64_t>>("dilations");
-            if(!dilation.has_value())
+            if (!dilation.has_value())
                 throw std::runtime_error("dilations missing for conv operator");
             auto kernel_shape =
                 node->getAttribute<std::vector<int64_t>>("kernel_shape");
-            if(!kernel_shape.has_value())
+            if (!kernel_shape.has_value())
                 throw std::runtime_error(
                     "kernel shape missing for conv operator");
             auto pads =
                 node->getAttribute<std::vector<int64_t>>("kernel_shape");
-            if(!pads.has_value())
+            if (!pads.has_value())
                 throw std::runtime_error("pads missing for conv operator");
             auto strides = node->getAttribute<std::vector<int64_t>>("strides");
-            if(!strides.has_value())
+            if (!strides.has_value())
                 throw std::runtime_error("strides missing for conv operator");
             auto group = node->getAttribute<int64_t>("group");
-            if(!group.has_value())
+            if (!group.has_value())
                 throw std::runtime_error("group missing for conv operator");
 
             throw std::logic_error("Not Implemented");
@@ -110,9 +110,9 @@ std::vector<Tensor<float>> InferenceEngine::prepareNodeInputs(
     const auto &input_names = node->getInputs();
     inputs.reserve(input_names.size());
 
-    for(const auto &input_name : input_names) {
+    for (const auto &input_name : input_names) {
         auto it = weights_.find(input_name);
-        if(it == weights_.end()) {
+        if (it == weights_.end()) {
             throw std::runtime_error("Input not found: " + input_name);
         }
         inputs.push_back(it->second);
@@ -126,9 +126,9 @@ std::vector<Tensor<float> *> InferenceEngine::ptrPrepareNodeInputs(
     const auto &input_names = node->getInputs();
     inputs.reserve(input_names.size());
 
-    for(const auto &input_name : input_names) {
+    for (const auto &input_name : input_names) {
         auto it = weights_.find(input_name);
-        if(it == weights_.end()) {
+        if (it == weights_.end()) {
             throw std::runtime_error("Input not found: " + input_name);
         }
         inputs.push_back(&it->second);
@@ -137,13 +137,13 @@ std::vector<Tensor<float> *> InferenceEngine::ptrPrepareNodeInputs(
 }
 
 void InferenceEngine::applyConstantFolding() {
-    for(auto node : graph_->getTopologicallySortedNodes()) {
+    for (auto node : graph_->getTopologicallySortedNodes()) {
         std::vector<Tensor<float> *> inputs;
         try {
             inputs = ptrPrepareNodeInputs(node);
             std::cout << "Found constant node, applying constant folding."
                       << std::endl;
-        } catch(const std::exception &e) {
+        } catch (const std::exception &e) {
             // not a constant node, skip.
             std::cout << "Skipping node, not constant." << std::endl;
             continue;
@@ -160,7 +160,7 @@ void InferenceEngine::applyConstantFolding() {
 }
 
 std::string op_type_to_string(OpType op_type) {
-    switch(op_type) {
+    switch (op_type) {
         case OpType::Input:
             return "Input";
         case OpType::Output:
