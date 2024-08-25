@@ -4,7 +4,7 @@ PROTOBUF_GENERATE_CPP(PROTO_SRCS PROTO_HDRS onnx-ml.proto)
 
 # Add an executable
 add_library(engine_lib
-    gemm.cpp
+    gemm_cpu.cpp
     gemm_cuda.cu
     attribute.cpp
     tensor.cpp

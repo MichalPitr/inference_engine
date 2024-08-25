@@ -53,7 +53,8 @@ Tensor<float> InferenceEngine::evaluateNode(
             const Tensor<float> &A = *inputs[0];
             const Tensor<float> &B = *inputs[1];
             const Tensor<float> &bias = *inputs[2];
-            return gemm(A, B, bias, transA, transB, alpha, beta);
+            return Operators<float>::gemm(A, B, bias, transA, transB, alpha,
+                                          beta);
         }
         case OpType::Flatten: {
             if (inputs.size() != 1) {
@@ -63,19 +64,19 @@ Tensor<float> InferenceEngine::evaluateNode(
             if (!axisOpt) {
                 throw std::runtime_error("Axis missing for flatten operation");
             }
-            return flatten(*inputs[0], axisOpt.value());
+            return Operators<float>::flatten(*inputs[0], axisOpt.value());
         }
         case OpType::Relu: {
             if (inputs.size() != 1) {
                 throw std::runtime_error("Relu operation expects 1 input");
             }
-            return relu(*inputs[0]);
+            return Operators<float>::relu(*inputs[0]);
         }
         case OpType::Add: {
             if (inputs.size() != 2) {
                 throw std::runtime_error("Add operation expects 2 inputs");
             }
-            return add(*inputs[0], *inputs[1]);
+            return Operators<float>::add(*inputs[0], *inputs[1]);
         }
         default:
             throw std::runtime_error("Unsupported op_type: " +
