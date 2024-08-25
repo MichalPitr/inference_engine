@@ -8,13 +8,7 @@
 template <typename T>
 class Tensor {
    public:
-    // Default constructors
     Tensor() = default;
-    Tensor(Tensor&&) = default;  // move
-    Tensor& operator=(Tensor&&) = default;
-    Tensor(const Tensor&) = default;  // copy
-    Tensor& operator=(Tensor const&) = default;
-    ~Tensor() = default;
 
     Tensor(const std::vector<T>& data, const std::vector<uint64_t>& shape);
 
