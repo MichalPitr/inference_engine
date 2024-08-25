@@ -71,53 +71,10 @@ Tensor<float> InferenceEngine::evaluateNode(
             assert(inputs.size() == 2);
             return add(*inputs[0], *inputs[1]);
         }
-        case OpType::Conv: {
-            assert(inputs.size() == 3);
-            // Tensor<float>& X = *inputs[0];
-            // Tensor<float>& W = *inputs[1];
-            // Tensor<float>& B = *inputs[2];
-            auto dilation =
-                node->getAttribute<std::vector<int64_t>>("dilations");
-            if (!dilation.has_value())
-                throw std::runtime_error("dilations missing for conv operator");
-            auto kernel_shape =
-                node->getAttribute<std::vector<int64_t>>("kernel_shape");
-            if (!kernel_shape.has_value())
-                throw std::runtime_error(
-                    "kernel shape missing for conv operator");
-            auto pads =
-                node->getAttribute<std::vector<int64_t>>("kernel_shape");
-            if (!pads.has_value())
-                throw std::runtime_error("pads missing for conv operator");
-            auto strides = node->getAttribute<std::vector<int64_t>>("strides");
-            if (!strides.has_value())
-                throw std::runtime_error("strides missing for conv operator");
-            auto group = node->getAttribute<int64_t>("group");
-            if (!group.has_value())
-                throw std::runtime_error("group missing for conv operator");
-
-            throw std::logic_error("Not Implemented");
-        }
         default:
             throw std::runtime_error("Op_type no supported: " +
                                      op_type_to_string(op_type));
     }
-}
-
-std::vector<Tensor<float>> InferenceEngine::prepareNodeInputs(
-    const Node *node) {
-    std::vector<Tensor<float>> inputs;
-    const auto &input_names = node->getInputs();
-    inputs.reserve(input_names.size());
-
-    for (const auto &input_name : input_names) {
-        auto it = weights_.find(input_name);
-        if (it == weights_.end()) {
-            throw std::runtime_error("Input not found: " + input_name);
-        }
-        inputs.push_back(it->second);
-    }
-    return inputs;
 }
 
 std::vector<Tensor<float> *> InferenceEngine::ptrPrepareNodeInputs(
