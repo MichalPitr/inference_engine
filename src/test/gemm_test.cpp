@@ -1,5 +1,4 @@
-#include "../gemm.h"
-
+#include "../gemm_cpu.h"
 #include "gtest/gtest.h"
 
 TEST(GemmTest, NoBias) {
