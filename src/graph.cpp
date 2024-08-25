@@ -1,22 +1,25 @@
 #include "graph.h"
 
-Graph::Graph(const onnx::GraphProto &graphProto)
+Graph::Graph(const onnx::GraphProto& graphProto)
 {
-    for (const auto &nodeProto : graphProto.node())
+    nodes_.reserve(graphProto.node_size());
+    for (const auto& nodeProto : graphProto.node())
     {
         addNode(std::make_unique<Node>(nodeProto));
     }
-    for (const auto &inputProto : graphProto.input())
+
+    inputs_.reserve(graphProto.input_size());
+    for (const auto& inputProto : graphProto.input())
     {
         inputs_.push_back(inputProto.name());
     }
-    for (const auto &outputProto : graphProto.output())
+
+    outputs_.reserve(graphProto.output_size());
+    for (const auto& outputProto : graphProto.output())
     {
         outputs_.push_back(outputProto.name());
     }
-    // printGraph();
 }
-
 void Graph::addNode(std::unique_ptr<Node> node)
 {
     std::string nodeName = node->getName();
@@ -116,18 +119,11 @@ bool Graph::isInputNode(Node *node) const
                        });
 }
 
-void Graph::topologicalSortUtil(Node *node, std::unordered_set<Node *> &visited, std::stack<Node *> &stack)
+void Graph::topologicalSortUtil(Node* node, std::unordered_set<Node*>& visited, std::stack<Node*>& stack)
 {
     visited.insert(node);
 
-    std::vector<Node *> children = adjList_.at(node);
-    if (children.size() == 0)
-    {
-        stack.push(node);
-        return;
-    }
-
-    for (auto child : children)
+    for (Node* child : adjList_[node])
     {
         if (visited.find(child) == visited.end())
         {
