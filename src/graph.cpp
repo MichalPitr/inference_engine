@@ -1,31 +1,31 @@
 #include "graph.h"
 
-Graph::Graph(const onnx::GraphProto& graphProto)
+Graph::Graph(const onnx::GraphProto &graphProto)
 {
-    nodes_.reserve(graphProto.node_size());
-    for (const auto& nodeProto : graphProto.node())
+    nodeMap_.reserve(graphProto.node_size());
+    for (const auto &nodeProto : graphProto.node())
     {
         addNode(std::make_unique<Node>(nodeProto));
     }
 
     inputs_.reserve(graphProto.input_size());
-    for (const auto& inputProto : graphProto.input())
+    for (const auto &inputProto : graphProto.input())
     {
         inputs_.push_back(inputProto.name());
     }
 
     outputs_.reserve(graphProto.output_size());
-    for (const auto& outputProto : graphProto.output())
+    for (const auto &outputProto : graphProto.output())
     {
         outputs_.push_back(outputProto.name());
     }
 }
+
 void Graph::addNode(std::unique_ptr<Node> node)
 {
     std::string nodeName = node->getName();
     Node *nodePtr = node.get();
-    nodes_[nodeName] = std::move(node);
-    adjList_[nodePtr] = {};
+    nodeMap_[nodeName].node = std::move(node);
 
     updateEdges(nodePtr);
 }
@@ -40,11 +40,12 @@ void Graph::addIncomingEdges(Node *node)
 {
     for (const auto &inputName : node->getInputs())
     {
-        for (const auto &[_, existingNode] : nodes_)
+        for (auto &[_, info] : nodeMap_)
         {
-            if (std::find(existingNode->getOutputs().begin(), existingNode->getOutputs().end(), inputName) != existingNode->getOutputs().end())
+            if (std::find(info.node->getOutputs().begin(), info.node->getOutputs().end(), inputName) != info.node->getOutputs().end())
             {
-                adjList_[existingNode.get()].push_back(node);
+                info.children.push_back(node);
+                nodeMap_[node->getName()].parents.push_back(info.node.get());
             }
         }
     }
@@ -54,11 +55,12 @@ void Graph::addOutgoingEdges(Node *node)
 {
     for (const auto &outputName : node->getOutputs())
     {
-        for (const auto &[_, existingNode] : nodes_)
+        for (auto &[_, info] : nodeMap_)
         {
-            if (std::find(existingNode->getInputs().begin(), existingNode->getInputs().end(), outputName) != existingNode->getInputs().end())
+            if (std::find(info.node->getInputs().begin(), info.node->getInputs().end(), outputName) != info.node->getInputs().end())
             {
-                adjList_[node].push_back(existingNode.get());
+                nodeMap_[node->getName()].children.push_back(info.node.get());
+                info.parents.push_back(node);
             }
         }
     }
@@ -66,10 +68,11 @@ void Graph::addOutgoingEdges(Node *node)
 
 void Graph::replaceNode(Node *oldNode, std::unique_ptr<Node> newNode)
 {
+    // Note: This assumes that the new node has the same connections as the old one.
+    // If this is not the case, parents/children need to updated manually.
     std::string name = oldNode->getName();
-    auto cp = adjList_[oldNode];
-    nodes_[name] = std::move(newNode);
-    adjList_[nodes_[name].get()] = cp;
+    auto &info = nodeMap_[name];
+    info.node = std::move(newNode);
 }
 
 const std::string &Graph::getInputName(std::size_t index) const
@@ -92,11 +95,11 @@ std::vector<Node *> Graph::getTopologicallySortedNodes()
     std::unordered_set<Node *> visited;
     std::stack<Node *> stack;
 
-    for (const auto &[_, node] : nodes_)
+    for (const auto &[_, info] : nodeMap_)
     {
-        if (isInputNode(node.get()))
+        if (info.parents.empty() || isInputNode(info.node.get()))
         {
-            topologicalSortUtil(node.get(), visited, stack);
+            topologicalSortUtil(info.node.get(), visited, stack);
         }
     }
 
@@ -119,11 +122,11 @@ bool Graph::isInputNode(Node *node) const
                        });
 }
 
-void Graph::topologicalSortUtil(Node* node, std::unordered_set<Node*>& visited, std::stack<Node*>& stack)
+void Graph::topologicalSortUtil(Node *node, std::unordered_set<Node *> &visited, std::stack<Node *> &stack)
 {
     visited.insert(node);
 
-    for (Node* child : adjList_[node])
+    for (Node *child : nodeMap_[node->getName()].children)
     {
         if (visited.find(child) == visited.end())
         {
@@ -136,12 +139,12 @@ void Graph::topologicalSortUtil(Node* node, std::unordered_set<Node*>& visited, 
 
 void Graph::printGraph() const
 {
-    for (const auto &keyVal : adjList_)
+    for (const auto &[name, info] : nodeMap_)
     {
-        std::cout << "Node " << keyVal.first->getName() << ": \n";
-        for (const auto &node : keyVal.second)
+        std::cout << "Node " << name << ": \n";
+        for (const auto &child : info.children)
         {
-            std::cout << "    child " << node->getName() << "\n";
+            std::cout << "    child " << child->getName() << "\n";
         }
     }
 }

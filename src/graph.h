@@ -11,6 +11,13 @@
 class Graph
 {
 public:
+    struct NodeInfo {
+        std::unique_ptr<Node> node;
+        std::vector<Node*> children;
+        std::vector<Node*> parents;
+    };
+
+
     Graph() = default;
     Graph(const onnx::GraphProto &graphProto);
 
@@ -30,8 +37,7 @@ private:
     void topologicalSortUtil(Node *node, std::unordered_set<Node *> &visited, std::stack<Node *> &stack);
     std::vector<std::string> inputs_;
     std::vector<std::string> outputs_;
-    std::unordered_map<std::string, std::unique_ptr<Node>> nodes_;
-    std::unordered_map<Node*, std::vector<Node*>> adjList_;
+    std::unordered_map<std::string, NodeInfo> nodeMap_;
     std::vector<Node*> sortedNodes_;
 };
 
