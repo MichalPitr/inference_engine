@@ -3,17 +3,17 @@
 
 #include <memory>
 #include <string>
+#include <unordered_map>
 
 #include "inference_engine.h"
 
 class ModelLoader {
    public:
-    std::unique_ptr<InferenceEngine> load(const std::string &modelFile);
+    std::unique_ptr<InferenceEngine> load(const std::string& modelFile);
 
    private:
-    void validate_model(const onnx::ModelProto &model);
-    std::unordered_map<std::string, Tensor<float>> load_weights(
-        const onnx::ModelProto &model);
+    static std::unordered_map<std::string, Tensor<float>> load_weights(
+        const onnx::ModelProto& model);
 };
 
 #endif  // MODEL_LOADER_H
