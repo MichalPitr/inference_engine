@@ -23,6 +23,10 @@ public:
     void replaceNode(Node* oldNode, std::unique_ptr<Node> newNode);
 
 private:
+    void updateEdges(Node* node);
+    void addIncomingEdges(Node* node);
+    bool isInputNode(Node* node) const;
+    void addOutgoingEdges(Node* node);
     void topologicalSortUtil(Node *node, std::unordered_set<Node *> &visited, std::stack<Node *> &stack);
     std::vector<std::string> inputs_;
     std::vector<std::string> outputs_;
