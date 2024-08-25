@@ -1,18 +1,18 @@
 #ifndef TENSOR_H
 #define TENSOR_H
 
-#include <vector>
 #include <cstdint>
 #include <string>
+#include <vector>
 
 template <typename T>
 class Tensor {
-public:
+   public:
     // Default constructors
     Tensor() = default;
-    Tensor(Tensor&&) = default; // move
+    Tensor(Tensor&&) = default;  // move
     Tensor& operator=(Tensor&&) = default;
-    Tensor(const Tensor&) = default; // copy
+    Tensor(const Tensor&) = default;  // copy
     Tensor& operator=(Tensor const&) = default;
     ~Tensor() = default;
 
@@ -24,15 +24,15 @@ public:
 
     std::vector<uint64_t> shape() const;
     void setShape(const std::vector<uint64_t>& shape);
-    
+
     std::string stringShape() const;
     std::string to_string() const;
-    
+
     uint64_t size() const;
 
-private:
+   private:
     std::vector<T> data_;
     std::vector<uint64_t> shape_;
 };
 
-#endif // TENSOR_H
+#endif  // TENSOR_H

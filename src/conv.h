@@ -4,4 +4,4 @@
 // TODO: Implement conv op here.
 void conv(const float* X, const float* W, const float* bias, float* out);
 
-#endif // CONV_H
+#endif  // CONV_H

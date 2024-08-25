@@ -75,6 +75,7 @@
                 "/home/michal/code/inference_engine/inputs/image_0.ubyte",
             ]
         },
-        "C_Cpp.default.compilerPath": "/usr/bin/clang++"
+        "C_Cpp.default.compilerPath": "/usr/bin/clang++",
+        "C_Cpp.clang_format_fallbackStyle": "Google"
 }
 

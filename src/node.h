@@ -1,29 +1,27 @@
 #ifndef NODE_H
 #define NODE_H
 
-#include <string>
 #include <optional>
+#include <string>
 
-#include "tensor.h"
 #include "attribute.h"
 #include "onnx-ml.pb.h"
+#include "tensor.h"
 
-enum class OpType
-{
-    Input,   // Input to the graph
-    Output,  // Output of the graph
-    Add,     // Add two tensors
-    Gemm,    // General Matrix Multiplication
-    Flatten, // Flatten an input
-    Relu,    // Rectified Linear Unit
-    Conv,    // Convolutional Layer
-    MaxPool, // Max Pooling Layer
-    Constant, // Constant node
+enum class OpType {
+    Input,     // Input to the graph
+    Output,    // Output of the graph
+    Add,       // Add two tensors
+    Gemm,      // General Matrix Multiplication
+    Flatten,   // Flatten an input
+    Relu,      // Rectified Linear Unit
+    Conv,      // Convolutional Layer
+    MaxPool,   // Max Pooling Layer
+    Constant,  // Constant node
 };
 
-class Node
-{
-public:
+class Node {
+   public:
     Node(const std::string &name, const OpType optype);
     Node(const onnx::NodeProto &nodeProto);
 
@@ -34,11 +32,11 @@ public:
     const std::unordered_map<std::string, Attribute> &getAttributes() const;
     template <typename T>
     std::optional<T> getAttribute(const std::string &name) const;
-    
+
     void addInput(std::string input);
     void addOutput(std::string output);
 
-private:
+   private:
     std::string name;
     OpType opType;
     // Sorted list of inputs as expected the by the corresponding opType.
