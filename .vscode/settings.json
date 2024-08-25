@@ -71,8 +71,7 @@
     },
     "cmake.debugConfig": {
         "args": [
-            "/home/michal/code/inference_engine/models/mnist_ffn_complex.onnx",
-            "/home/michal/code/inference_engine/inputs/image_0.ubyte",
+            "/home/michal/code/inference_engine/model_repository/mnist.yaml"
         ]
     },
     "C_Cpp.default.compilerPath": "/usr/bin/clang++",

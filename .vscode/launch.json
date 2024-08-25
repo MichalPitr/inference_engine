@@ -5,8 +5,10 @@
             "name": "(gdb) Launch",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/build/src/engine_exe", // Path to your executable
-            "args": ["${workspaceFolder}/models/mnist_ffn_complex.onnx", "haha"],
+            "program": "${workspaceFolder}/build/src/engine_exe",
+            "args": [
+                "${workspaceFolder}/model_repository/mnist.yaml"
+            ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [],

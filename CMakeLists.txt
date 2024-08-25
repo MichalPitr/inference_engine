@@ -17,8 +17,10 @@ find_package(Protobuf REQUIRED)
 find_package(benchmark REQUIRED)
 find_package(GTest REQUIRED)
 find_package(CUDA REQUIRED)
+find_package(yaml-cpp REQUIRED)
 
 include_directories(${PROTOBUF_INCLUDE_DIRS})
+include_directories(${YAML_CPP_INCLUDE_DIR})
 
 add_subdirectory(src)
 add_subdirectory(src/test)

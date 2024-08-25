@@ -14,6 +14,7 @@ add_library(engine_lib
     graph.cpp
     node.cpp
     onnx_helper.cpp
+    model_config.cpp
     model_loader.cpp
     inference_engine.cpp
     ${PROTO_SRCS}
@@ -21,10 +22,11 @@ add_library(engine_lib
 
 target_include_directories(engine_lib PUBLIC
     ${PROTOBUF_INCLUDE_DIRS}
-    ${CMAKE_CURRENT_BINARY_DIR})
+    ${CMAKE_CURRENT_BINARY_DIR}
+    ${YAML_CPP_INCLUDE_DIR})
 
 # link the exe against the libraries
-target_link_libraries(engine_lib PUBLIC ${PROTOBUF_LIBRARIES})
+target_link_libraries(engine_lib PUBLIC ${PROTOBUF_LIBRARIES}  yaml-cpp)
 
 add_executable(engine_exe main.cpp)
 
