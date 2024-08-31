@@ -16,8 +16,12 @@ set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcompiler -Wall,-Wextra,-Wno-deprecat
 find_package(Protobuf REQUIRED)
 find_package(benchmark REQUIRED)
 find_package(GTest REQUIRED)
-find_package(CUDA REQUIRED)
 find_package(yaml-cpp REQUIRED)
+find_package(CUDA)
+if (CUDA_FOUND)
+    add_definitions(-DUSE_CUDA)
+    include_directories(${CUDA_INCLUDE_DIRS})
+endif()
 
 include_directories(${PROTOBUF_INCLUDE_DIRS})
 include_directories(${YAML_CPP_INCLUDE_DIR})

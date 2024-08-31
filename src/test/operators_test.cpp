@@ -27,12 +27,17 @@ TEST(OperatorsTest, relu) {
     Tensor<float> t1{{-1., 0, 1, -1, 1, -0.5, -0, 0.5}, {2, 4}};
     auto t2 = Operators<float>::relu(t1);
     std::vector<float> expected{0, 0, 1, 0, 1, 0, 0, 0.5};
-    EXPECT_EQ(expected, t2.data());
+
+    for (std::size_t i = 0; i < t2.size(); ++i) {
+        EXPECT_EQ(t2.data()[i], expected[i]);
+    }
 
     Tensor<float> t3{{1, 1, 1, 1}, {2, 2}};
     auto t4 = Operators<float>::relu(t3);
     std::vector<float> expected2{1, 1, 1, 1};
-    EXPECT_EQ(expected2, t4.data());
+    for (std::size_t i = 0; i < t4.size(); ++i) {
+        EXPECT_EQ(t4.data()[i], expected2[i]);
+    }
 }
 
 TEST(OperatorsTest, gemmMatrixVector) {
@@ -45,7 +50,9 @@ TEST(OperatorsTest, gemmMatrixVector) {
     std::vector<uint64_t> expectShape{2, 1};
     EXPECT_EQ(expectShape, res.shape());
     std::vector<float> expectData{4, 8};
-    EXPECT_EQ(expectData, res.data());
+    for (std::size_t i = 0; i < res.size(); ++i) {
+        EXPECT_EQ(res.data()[i], expectData[i]);
+    }
 }
 
 TEST(OperatorsTest, gemmMatrixMatrix) {
@@ -59,7 +66,9 @@ TEST(OperatorsTest, gemmMatrixMatrix) {
     EXPECT_EQ(expectShape, res.shape());
 
     std::vector<float> expectData{4, 4, 9, 9};
-    EXPECT_EQ(expectData, res.data());
+    for (std::size_t i = 0; i < res.size(); ++i) {
+        EXPECT_EQ(res.data()[i], expectData[i]);
+    }
 }
 
 TEST(OperatorsTest, gemmMatrixMatrixTransA) {
@@ -73,7 +82,9 @@ TEST(OperatorsTest, gemmMatrixMatrixTransA) {
     EXPECT_EQ(expectShape, res.shape());
 
     std::vector<float> expectData{3, 3};
-    EXPECT_EQ(expectData, res.data());
+    for (std::size_t i = 0; i < res.size(); ++i) {
+        EXPECT_EQ(res.data()[i], expectData[i]);
+    }
 }
 
 TEST(OperatorsTest, gemmMatrixMatrixTransB) {
@@ -87,5 +98,7 @@ TEST(OperatorsTest, gemmMatrixMatrixTransB) {
     EXPECT_EQ(expectShape, res.shape());
 
     std::vector<float> expectData{3, 3};
-    EXPECT_EQ(expectData, res.data());
+    for (std::size_t i = 0; i < res.size(); ++i) {
+        EXPECT_EQ(res.data()[i], expectData[i]);
+    }
 }

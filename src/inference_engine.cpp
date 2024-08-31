@@ -17,7 +17,7 @@ InferenceEngine::InferenceEngine(
 }
 
 Tensor<float> InferenceEngine::infer(const Tensor<float> &input) {
-    weights_[graph_->getInputName(0)] = input;
+    weights_[graph_->getInputName(0)] = Tensor<float>(input);
 
     for (const auto node : graph_->getTopologicallySortedNodes()) {
         auto inputs = prepareNodeInputs(node);
@@ -35,8 +35,9 @@ Tensor<float> InferenceEngine::infer(const Tensor<float> &input) {
     if (it == weights_.end()) {
         throw std::runtime_error("Output not found: " + graph_output);
     }
-
-    return it->second;
+    auto res = std::move(it->second);
+    weights_.erase(it);
+    return res;
 }
 
 Tensor<float> InferenceEngine::evaluateNode(
@@ -80,7 +81,7 @@ void InferenceEngine::applyConstantFolding() {
         auto constantNode =
             std::make_unique<Node>(node->getName(), OpType::Constant);
         constantNode->addOutput(constantNode->getOutputs()[0]);
-        weights_[constantNode->getOutputs()[0]] = res;
+        weights_[constantNode->getOutputs()[0]] = std::move(res);
         graph_->replaceNode(node, std::move(constantNode));
     }
 }

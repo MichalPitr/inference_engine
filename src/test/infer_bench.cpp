@@ -23,9 +23,10 @@ BENCHMARK(BM_Infer);
 
 int main(int argc, char** argv) {
     // Load model and input before running benchmarks
+    ModelConfig config(
+        "/home/michal/code/inference_engine/model_repository/mnist.yaml");
     ModelLoader loader;
-    global_engine =
-        loader.load("/home/michal/code/inference_engine/models/mnist_ffn.onnx");
+    global_engine = loader.load(config);
     global_input =
         load_input("/home/michal/code/inference_engine/inputs/image_0.ubyte");
 

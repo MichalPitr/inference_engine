@@ -58,9 +58,9 @@ Tensor<T> Operators<T>::gemm(const Tensor<T>& A, const Tensor<T>& B,
 
     std::vector<T> outData(N * K);
 
-    const T* AData = A.raw_data();
-    const T* BData = B.raw_data();
-    const T* BiasData = bias.raw_data();
+    const T* AData = A.data();
+    const T* BData = B.data();
+    const T* BiasData = bias.data();
 
     if (true) {
         gemm_cuda(AData, BData, BiasData, outData.data(), N, M, K, transA,
@@ -96,7 +96,7 @@ Tensor<T> Operators<T>::flatten(const Tensor<T>& tensor, uint64_t axis) {
 template <typename T>
 Tensor<T> Operators<T>::relu(const Tensor<T>& tensor) {
     Tensor<T> output(tensor);
-    T* raw = output.raw_data();
+    T* raw = output.data();
     for (std::size_t i = 0; i < output.size(); ++i) {
         raw[i] = std::max(static_cast<T>(0), raw[i]);
     }
@@ -107,8 +107,8 @@ template <typename T>
 Tensor<T> Operators<T>::add(const Tensor<T>& A, const Tensor<T>& B) {
     assert(A.shape() == B.shape());
     Tensor<T> output(A);
-    T* raw = output.raw_data();
-    const T* b_raw = B.raw_data();
+    T* raw = output.data();
+    const T* b_raw = B.data();
     for (std::size_t i = 0; i < output.size(); ++i) {
         raw[i] += b_raw[i];
     }

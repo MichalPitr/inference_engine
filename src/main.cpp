@@ -23,9 +23,21 @@ int main(int argc, char** argv) {
     std::cout << "Batch size: " << config.get_batch_size() << std::endl;
 
     auto engine = loader.load(config);
-    auto input = load_input(argv[2]);
-    auto output = engine->infer(input);
-    std::cout << "Out: " << output.to_string() << "\n";
+    std::string file = "/home/michal/code/inference_engine/inputs/image_";
+    // Rerun 100 times.
+    for (int j = 0; j < 5; ++j) {
+        // 100 Sequential inference requests.
+        for (int i = 0; i < 100; ++i) {
+            std::ostringstream oss;
+            oss << file << i << ".ubyte";
+            std::string formattedString = oss.str();
+            auto input = load_input(formattedString);
+            // auto input = load_input(argv[2]);
+
+            auto output = engine->infer(input);
+            std::cout << "Out: " << output.toString() << "\n";
+        }
+    }
 
     return 0;
 }
