@@ -16,7 +16,7 @@ class ModelLoader {
     void validate_model(const onnx::ModelProto& model,
                         const ModelConfig& config);
     std::unordered_map<std::string, Tensor<float>> load_weights(
-        const onnx::ModelProto& model);
+        const onnx::ModelProto& model, const ModelConfig& config);
 };
 
 #endif  // MODEL_LOADER_H

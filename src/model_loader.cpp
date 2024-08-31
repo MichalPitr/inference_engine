@@ -23,7 +23,7 @@ std::unique_ptr<InferenceEngine> ModelLoader::load(const ModelConfig& config) {
 
     validate_model(model, config);
 
-    auto weights = load_weights(model);
+    auto weights = load_weights(model, config);
     auto graph = std::make_unique<Graph>(model.graph());
     return std::make_unique<InferenceEngine>(std::move(graph),
                                              std::move(weights));
@@ -63,7 +63,7 @@ void ModelLoader::validate_model(const onnx::ModelProto& model,
 }
 
 std::unordered_map<std::string, Tensor<float>> ModelLoader::load_weights(
-    const onnx::ModelProto& model) {
+    const onnx::ModelProto& model, const ModelConfig& config) {
     std::unordered_map<std::string, Tensor<float>> weights;
     for (const auto& initializer : model.graph().initializer()) {
         if (initializer.data_type() != onnx::TensorProto::FLOAT) {
@@ -72,13 +72,19 @@ std::unordered_map<std::string, Tensor<float>> ModelLoader::load_weights(
 
         const auto& raw_data = initializer.raw_data();
         const float* data_ptr = reinterpret_cast<const float*>(raw_data.data());
-        std::vector<float> data(data_ptr,
-                                data_ptr + raw_data.size() / sizeof(float));
 
         std::vector<uint64_t> shape(initializer.dims().begin(),
                                     initializer.dims().end());
-        weights.emplace(initializer.name(),
-                        Tensor<float>{std::move(data), std::move(shape)});
+
+        if (config.get_execution_provider() == ExecutionProvider::CUDA) {
+            weights.emplace(
+                initializer.name(),
+                Tensor<float>{data_ptr, std::move(shape), DeviceType::CUDA});
+        } else {
+            weights.emplace(
+                initializer.name(),
+                Tensor<float>{data_ptr, std::move(shape), DeviceType::CPU});
+        }
     }
     return weights;
 }

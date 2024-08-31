@@ -30,16 +30,7 @@ Tensor<T>::Tensor(const std::vector<T>& data,
             "Data size does not match the specified shape.");
     }
     allocateMemory();
-    if (device_ == DeviceType::CPU) {
-        std::memcpy(data_, data.data(), size_ * sizeof(T));
-    } else {
-#ifdef USE_CUDA
-        cudaMemcpy(data_, data.data(), size_ * sizeof(T),
-                   cudaMemcpyHostToDevice);
-#else
-        throw std::runtime_error("CUDA support not enabled.");
-#endif
-    }
+    copyFrom(data.data(), size_);
 }
 
 template <typename T>
@@ -53,8 +44,10 @@ Tensor<T>::Tensor(const T* data, const std::vector<uint64_t>& shape,
 }
 
 template <typename T>
-Tensor<T>::~Tensor() {
-    freeMemory();
+Tensor<T>::Tensor(const Tensor& other)
+    : shape_(other.shape_), size_(other.size_), device_(other.device_) {
+    allocateMemory();
+    copyFrom(other);
 }
 
 template <typename T>
@@ -64,6 +57,11 @@ Tensor<T>::Tensor(Tensor&& other) noexcept
       size_(other.size_),
       device_(other.device_) {
     other.data_ = nullptr;
+}
+
+template <typename T>
+Tensor<T>::~Tensor() {
+    freeMemory();
 }
 
 template <typename T>
@@ -77,13 +75,6 @@ Tensor<T>& Tensor<T>::operator=(Tensor&& other) noexcept {
         other.data_ = nullptr;
     }
     return *this;
-}
-
-template <typename T>
-Tensor<T>::Tensor(const Tensor& other)
-    : shape_(other.shape_), size_(other.size_), device_(other.device_) {
-    allocateMemory();
-    copyFrom(other);
 }
 
 template <typename T>

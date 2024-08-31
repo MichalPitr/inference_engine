@@ -19,12 +19,11 @@ class Tensor {
            DeviceType device = DeviceType::CPU);
     ~Tensor();
 
-    // Allow copy constructor.
-    // Copy operations
+    // Copy constructors
     Tensor(const Tensor& other);
     Tensor& operator=(const Tensor& other);
 
-    // Enable move operations
+    // Move constructors
     Tensor(Tensor&& other) noexcept;
     Tensor& operator=(Tensor&& other) noexcept;
 
@@ -43,10 +42,10 @@ class Tensor {
     void to(DeviceType newDevice);
 
    private:
-    uint64_t size_;
-    DeviceType device_;
     T* data_ = nullptr;
     std::vector<uint64_t> shape_;
+    uint64_t size_;
+    DeviceType device_;
 
     void allocateMemory();
     void freeMemory();

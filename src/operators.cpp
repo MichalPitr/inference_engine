@@ -62,7 +62,7 @@ Tensor<T> Operators<T>::gemm(const Tensor<T>& A, const Tensor<T>& B,
     const T* BData = B.data();
     const T* BiasData = bias.data();
 
-    if (true) {
+    if (false) {
         gemm_cuda(AData, BData, BiasData, outData.data(), N, M, K, transA,
                   transB, alpha, beta);
     } else {

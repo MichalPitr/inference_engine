@@ -75,7 +75,6 @@ TEST(TensorTest, MoveAssignmentOperator) {
 
 TEST(TensorTest, ParametrizedConstructor) {
     float data[] = {1.0f, 2.0f, 3.0f, 4.0f};
-
     std::vector<uint64_t> shape{2, 2};
 
     Tensor<float> t{{1.0f, 2.0f, 3.0f, 4.0f}, {2, 2}};
@@ -91,6 +90,19 @@ TEST(TensorTest, ParametrizedCopyAssignmentConstructor) {
     std::vector<uint64_t> shape{2, 2};
 
     Tensor<float> t = Tensor<float>{{1.0f, 2.0f, 3.0f, 4.0f}, {2, 2}};
+    for (std::size_t i = 0; i < t.size(); ++i) {
+        EXPECT_EQ(t.data()[i], data[i]);
+    }
+    EXPECT_EQ(t.shape(), shape);
+    EXPECT_EQ(t.size(), 4);
+}
+
+TEST(TensorTest, GpuConstructor) {
+    float data[] = {1.0f, 2.0f, 3.0f, 4.0f};
+    std::vector<uint64_t> shape{2, 2};
+
+    Tensor<float> t{{1.0f, 2.0f, 3.0f, 4.0f}, {2, 2}, DeviceType::CUDA};
+    t.to(DeviceType::CPU);
     for (std::size_t i = 0; i < t.size(); ++i) {
         EXPECT_EQ(t.data()[i], data[i]);
     }
