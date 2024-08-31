@@ -19,7 +19,7 @@ enum class ExecutionProvider {
 
 struct TensorConfig {
     std::string name;
-    std::vector<int64_t> shape;
+    std::vector<uint64_t> shape;
     DataType data_type;
 };
 

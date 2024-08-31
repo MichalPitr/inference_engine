@@ -31,7 +31,7 @@ int main(int argc, char** argv) {
             std::ostringstream oss;
             oss << file << i << ".ubyte";
             std::string formattedString = oss.str();
-            auto input = load_input(formattedString);
+            auto input = load_input(formattedString, config);
             // auto input = load_input(argv[2]);
 
             auto output = engine->infer(input);

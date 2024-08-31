@@ -1,21 +1,26 @@
+#include "input_loader.h"
+
 #include <fstream>
 #include <stdexcept>
 #include <vector>
 
-#include "tensor.h"
-
-Tensor<float> load_input(const std::string& filename) {
+Tensor<float> load_input(const std::string& filename,
+                         const ModelConfig& config) {
     std::ifstream file(filename, std::ios::binary);
     if (!file) {
         throw std::runtime_error("Error opening file: " + filename);
     }
 
-    constexpr size_t expected_size = 28 * 28;  // 784
+    const auto& input_shape = config.get_inputs()[0].shape;
+    size_t expected_size = 1;
+    for (const auto& dim : input_shape) {
+        expected_size *= dim;
+    }
     std::vector<unsigned char> bytes(expected_size);
 
     file.read(reinterpret_cast<char*>(bytes.data()), expected_size);
 
-    if (file.gcount() != expected_size) {
+    if (file.gcount() != static_cast<std::streamsize>(expected_size)) {
         throw std::runtime_error("Unexpected file size: " + filename);
     }
 
@@ -26,5 +31,10 @@ Tensor<float> load_input(const std::string& filename) {
         floatValues.push_back(static_cast<float>(byte));
     }
 
-    return Tensor<float>{std::move(floatValues), {1, 1, 28, 28}};
+    DeviceType device =
+        (config.get_execution_provider() == ExecutionProvider::CUDA)
+            ? DeviceType::CUDA
+            : DeviceType::CPU;
+
+    return Tensor<float>{std::move(floatValues), input_shape, device};
 }

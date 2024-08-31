@@ -76,15 +76,13 @@ std::unordered_map<std::string, Tensor<float>> ModelLoader::load_weights(
         std::vector<uint64_t> shape(initializer.dims().begin(),
                                     initializer.dims().end());
 
-        if (config.get_execution_provider() == ExecutionProvider::CUDA) {
-            weights.emplace(
-                initializer.name(),
-                Tensor<float>{data_ptr, std::move(shape), DeviceType::CUDA});
-        } else {
-            weights.emplace(
-                initializer.name(),
-                Tensor<float>{data_ptr, std::move(shape), DeviceType::CPU});
-        }
+        DeviceType device =
+            (config.get_execution_provider() == ExecutionProvider::CUDA)
+                ? DeviceType::CUDA
+                : DeviceType::CPU;
+
+        weights.emplace(initializer.name(),
+                        Tensor<float>{data_ptr, std::move(shape), device});
     }
     return weights;
 }

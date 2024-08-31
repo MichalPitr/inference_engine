@@ -60,7 +60,7 @@ ExecutionProvider ModelConfig::string_to_execution_provider(
 TensorConfig ModelConfig::parse_tensor_config(const YAML::Node& node) {
     TensorConfig tensor_config;
     tensor_config.name = node["name"].as<std::string>();
-    tensor_config.shape = node["shape"].as<std::vector<int64_t>>();
+    tensor_config.shape = node["shape"].as<std::vector<uint64_t>>();
     tensor_config.data_type =
         string_to_data_type(node["data_type"].as<std::string>());
     return tensor_config;
