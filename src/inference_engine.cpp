@@ -23,7 +23,7 @@ InferenceEngine::InferenceEngine(
 }
 
 Tensor<float> InferenceEngine::infer(const Tensor<float> &input) {
-    weights_[graph_->getInputName(0)] = Tensor<float>(input);
+    weights_.insert_or_assign(graph_->getInputName(0), std::move(input));
     assert(weights_[graph_->getInputName(0)].device() == device_);
 
     for (const auto node : graph_->getTopologicallySortedNodes()) {

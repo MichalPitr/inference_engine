@@ -36,5 +36,5 @@ Tensor<float> load_input(const std::string& filename,
             ? DeviceType::CUDA
             : DeviceType::CPU;
 
-    return Tensor<float>{std::move(floatValues), input_shape, device};
+    return Tensor<float>{floatValues.data(), input_shape, device};
 }

@@ -13,8 +13,6 @@ class Tensor {
     Tensor() = default;
     Tensor(const std::vector<uint64_t>& shape,
            DeviceType device = DeviceType::CPU);
-    Tensor(const std::vector<T>& data, const std::vector<uint64_t>& shape,
-           DeviceType device = DeviceType::CPU);
     Tensor(const T* data, const std::vector<uint64_t>& shape,
            DeviceType device = DeviceType::CPU);
     ~Tensor();

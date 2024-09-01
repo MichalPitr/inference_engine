@@ -20,20 +20,6 @@ Tensor<T>::Tensor(const std::vector<uint64_t>& shape, DeviceType device)
 }
 
 template <typename T>
-Tensor<T>::Tensor(const std::vector<T>& data,
-                  const std::vector<uint64_t>& shape, DeviceType device)
-    : shape_(shape), device_(device) {
-    size_ = std::accumulate(shape.begin(), shape.end(), 1ULL,
-                            std::multiplies<uint64_t>());
-    if (data.size() != size_) {
-        throw std::invalid_argument(
-            "Data size does not match the specified shape.");
-    }
-    allocateMemory();
-    copyFrom(data.data(), size_);
-}
-
-template <typename T>
 Tensor<T>::Tensor(const T* data, const std::vector<uint64_t>& shape,
                   DeviceType device)
     : shape_(shape), device_(device) {
@@ -67,7 +53,6 @@ Tensor<T>::~Tensor() {
 template <typename T>
 Tensor<T>& Tensor<T>::operator=(Tensor&& other) noexcept {
     if (this != &other) {
-        freeMemory();
         data_ = other.data_;
         shape_ = std::move(other.shape_);
         size_ = other.size_;
@@ -80,12 +65,10 @@ Tensor<T>& Tensor<T>::operator=(Tensor&& other) noexcept {
 template <typename T>
 Tensor<T>& Tensor<T>::operator=(const Tensor& other) {
     if (this != &other) {
-        freeMemory();
+        data_ = other.data_;
         shape_ = other.shape_;
         size_ = other.size_;
         device_ = other.device_;
-        allocateMemory();
-        copyFrom(other);
     }
     return *this;
 }
