@@ -13,11 +13,14 @@ class OperatorRegistry {
     using OperatorFunction =
         std::function<Tensor<T>(const Node*, const std::vector<Tensor<T>*>&)>;
 
-    void registerOperator(OpType opType, OperatorFunction func);
+    void registerCpuOperator(OpType opType, OperatorFunction func);
+    void registerCudaOperator(OpType opType, OperatorFunction func);
     Tensor<T> executeOperator(const Node* node,
-                              const std::vector<Tensor<T>*>& inputs);
+                              const std::vector<Tensor<T>*>& inputs,
+                              const DeviceType device);
 
    private:
-    std::unordered_map<OpType, OperatorFunction> operatorMap;
+    std::unordered_map<OpType, OperatorFunction> cpuOperatorMap;
+    std::unordered_map<OpType, OperatorFunction> cudaOperatorMap;
 };
 #endif

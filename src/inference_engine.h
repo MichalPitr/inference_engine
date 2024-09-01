@@ -12,13 +12,16 @@
 class InferenceEngine {
    public:
     InferenceEngine(std::unique_ptr<Graph> graph,
-                    std::unordered_map<std::string, Tensor<float>> weights);
+                    std::unordered_map<std::string, Tensor<float>> weights,
+                    DeviceType device);
     Tensor<float> infer(const Tensor<float>& input);
     void applyOptimizations();
 
    private:
     void applyConstantFolding();
-    void registerOperators();
+    void registerCpuOperators();
+    void registerCudaOperators();
+
     Tensor<float> evaluateNode(const Node* node,
                                const std::vector<Tensor<float>*>& inputs);
     std::vector<Tensor<float>*> prepareNodeInputs(const Node* node);
@@ -26,6 +29,7 @@ class InferenceEngine {
     OperatorRegistry<float> registry_;
     std::unique_ptr<Graph> graph_;
     std::unordered_map<std::string, Tensor<float>> weights_;
+    DeviceType device_;
 };
 
 #endif  // INFERENCE_ENGINE_H

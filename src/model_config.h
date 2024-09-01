@@ -25,6 +25,7 @@ struct TensorConfig {
 
 class ModelConfig {
    public:
+    ModelConfig() = default;
     ModelConfig(const std::string& config_file);
 
     std::string get_model_path() const { return model_path; }

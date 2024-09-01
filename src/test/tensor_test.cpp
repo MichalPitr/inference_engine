@@ -90,6 +90,7 @@ TEST(TensorTest, ParametrizedCopyAssignmentConstructor) {
     std::vector<uint64_t> shape{2, 2};
 
     Tensor<float> t = Tensor<float>{{1.0f, 2.0f, 3.0f, 4.0f}, {2, 2}};
+    EXPECT_EQ(t.device(), DeviceType::CPU);
     for (std::size_t i = 0; i < t.size(); ++i) {
         EXPECT_EQ(t.data()[i], data[i]);
     }
@@ -102,6 +103,7 @@ TEST(TensorTest, GpuConstructor) {
     std::vector<uint64_t> shape{2, 2};
 
     Tensor<float> t{{1.0f, 2.0f, 3.0f, 4.0f}, {2, 2}, DeviceType::CUDA};
+    EXPECT_EQ(t.device(), DeviceType::CUDA);
     t.to(DeviceType::CPU);
     for (std::size_t i = 0; i < t.size(); ++i) {
         EXPECT_EQ(t.data()[i], data[i]);

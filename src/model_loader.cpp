@@ -25,8 +25,13 @@ std::unique_ptr<InferenceEngine> ModelLoader::load(const ModelConfig& config) {
 
     auto weights = load_weights(model, config);
     auto graph = std::make_unique<Graph>(model.graph());
+    DeviceType device =
+        (config.get_execution_provider() == ExecutionProvider::CUDA)
+            ? DeviceType::CUDA
+            : DeviceType::CPU;
+
     return std::make_unique<InferenceEngine>(std::move(graph),
-                                             std::move(weights));
+                                             std::move(weights), device);
 }
 
 void ModelLoader::validate_model(const onnx::ModelProto& model,

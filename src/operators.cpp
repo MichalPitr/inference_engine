@@ -6,13 +6,121 @@
 #include <iostream>
 
 #include "gemm_cpu.h"
-#include "gemm_cuda.h"
+#include "kernels.h"
 
-// Returns a Tensor containing the result of A*B + bias
+//-----------------//
+//  CPU operators  //
+//-----------------//
+
 template <typename T>
-Tensor<T> Operators<T>::gemm(const Tensor<T>& A, const Tensor<T>& B,
-                             const Tensor<T>& bias, bool transA, bool transB,
-                             float alpha, float beta) {
+Tensor<T> CpuOperators<T>::gemm(const Tensor<T>& A, const Tensor<T>& B,
+                                const Tensor<T>& bias, bool transA, bool transB,
+                                float alpha, float beta) {
+    validate_gemm_inputs(A, B, bias, transA, transB);
+
+    // Calculate output dimensions depending on transpositions.
+    uint64_t N = transA ? A.shape()[1] : A.shape()[0];
+    uint64_t M = transB ? B.shape()[1] : B.shape()[0];
+    uint64_t K = transB ? B.shape()[0] : B.shape()[1];
+    std::vector<uint64_t> dims{N, K};
+
+    Tensor<T> out{std::move(dims), A.device()};
+
+    assert(A.device() == DeviceType::CPU);
+    const T* AData = A.data();
+    const T* BData = B.data();
+    const T* BiasData = bias.data();
+
+    gemm_cpu(AData, BData, BiasData, out.data(), N, M, K, transA, transB, alpha,
+             beta);
+
+    return out;
+}
+
+template <typename T>
+Tensor<T> CpuOperators<T>::flatten(const Tensor<T>& tensor, uint64_t axis) {
+    return base_flatten(tensor, axis);
+}
+
+template <typename T>
+Tensor<T> CpuOperators<T>::relu(const Tensor<T>& tensor) {
+    Tensor<T> output(tensor);
+    T* raw = output.data();
+    for (std::size_t i = 0; i < output.size(); ++i) {
+        raw[i] = std::max(static_cast<T>(0), raw[i]);
+    }
+    return output;
+}
+
+template <typename T>
+Tensor<T> CpuOperators<T>::add(const Tensor<T>& A, const Tensor<T>& B) {
+    assert(A.shape() == B.shape());
+    Tensor<T> output(A);
+    T* raw = output.data();
+    const T* b_raw = B.data();
+    for (std::size_t i = 0; i < output.size(); ++i) {
+        raw[i] += b_raw[i];
+    }
+    return output;
+}
+
+//------------------//
+//  CUDA operators  //
+//------------------//
+
+template <typename T>
+Tensor<T> CudaOperators<T>::gemm(const Tensor<T>& A, const Tensor<T>& B,
+                                 const Tensor<T>& bias, bool transA,
+                                 bool transB, float alpha, float beta) {
+    validate_gemm_inputs(A, B, bias, transA, transB);
+
+    // Calculate output dimensions depending on transpositions.
+    uint64_t N = transA ? A.shape()[1] : A.shape()[0];
+    uint64_t M = transB ? B.shape()[1] : B.shape()[0];
+    uint64_t K = transB ? B.shape()[0] : B.shape()[1];
+
+    std::vector<uint64_t> dims{N, K};
+
+    Tensor<T> out{std::move(dims), A.device()};
+
+    assert(A.device() == DeviceType::CUDA);
+    const T* AData = A.data();
+    const T* BData = B.data();
+    const T* BiasData = bias.data();
+
+    gemm_cuda(AData, BData, BiasData, out.data(), N, M, K, transA, transB,
+              alpha, beta);
+
+    return out;
+}
+
+template <typename T>
+Tensor<T> CudaOperators<T>::flatten(const Tensor<T>& tensor, uint64_t axis) {
+    return base_flatten(tensor, axis);
+}
+
+template <typename T>
+Tensor<T> CudaOperators<T>::relu(const Tensor<T>& tensor) {
+    Tensor<T> output(tensor);
+    relu_cuda(output.data(), output.size());
+    return output;
+}
+
+template <typename T>
+Tensor<T> CudaOperators<T>::add(const Tensor<T>& A, const Tensor<T>& B) {
+    assert(A.shape() == B.shape());
+    Tensor<T> output(A);
+    add_cuda(output.data(), B.data(), output.size());
+    return output;
+}
+
+//------------------//
+//      shared      //
+//------------------//
+
+template <typename T>
+void validate_gemm_inputs(const Tensor<T>& A, const Tensor<T>& B,
+                          const Tensor<T>& bias, bool transA, bool transB) {
     if (A.shape().size() != 2 || B.shape().size() != 2 ||
         bias.shape().size() == 0) {
         std::cerr << "A dims: " << A.shape().size() << " B dims "
@@ -48,34 +156,10 @@ Tensor<T> Operators<T>::gemm(const Tensor<T>& A, const Tensor<T>& B,
         throw std::invalid_argument(
             "Matrix dimensions are not compatible for multiplication in Gemm.");
     }
-
-    // Calculate output dimensions depending on transpositions.
-    uint64_t N = transA ? A.shape()[1] : A.shape()[0];
-    uint64_t M = transB ? B.shape()[1] : B.shape()[0];
-    uint64_t K = transB ? B.shape()[0] : B.shape()[1];
-
-    std::vector<uint64_t> dims{N, K};
-
-    std::vector<T> outData(N * K);
-
-    const T* AData = A.data();
-    const T* BData = B.data();
-    const T* BiasData = bias.data();
-
-    if (false) {
-        gemm_cuda(AData, BData, BiasData, outData.data(), N, M, K, transA,
-                  transB, alpha, beta);
-    } else {
-        gemm_cpu(AData, BData, BiasData, outData.data(), N, M, K, transA,
-                 transB, alpha, beta);
-    }
-
-    Tensor<T> result = Tensor<T>(std::move(outData), std::move(dims));
-    return result;
 }
 
 template <typename T>
-Tensor<T> Operators<T>::flatten(const Tensor<T>& tensor, uint64_t axis) {
+Tensor<T> base_flatten(const Tensor<T>& tensor, uint64_t axis) {
     assert(axis <= tensor.shape().size());
 
     uint64_t dimBefore = 1;
@@ -93,26 +177,5 @@ Tensor<T> Operators<T>::flatten(const Tensor<T>& tensor, uint64_t axis) {
     return flat;
 }
 
-template <typename T>
-Tensor<T> Operators<T>::relu(const Tensor<T>& tensor) {
-    Tensor<T> output(tensor);
-    T* raw = output.data();
-    for (std::size_t i = 0; i < output.size(); ++i) {
-        raw[i] = std::max(static_cast<T>(0), raw[i]);
-    }
-    return output;
-}
-
-template <typename T>
-Tensor<T> Operators<T>::add(const Tensor<T>& A, const Tensor<T>& B) {
-    assert(A.shape() == B.shape());
-    Tensor<T> output(A);
-    T* raw = output.data();
-    const T* b_raw = B.data();
-    for (std::size_t i = 0; i < output.size(); ++i) {
-        raw[i] += b_raw[i];
-    }
-    return output;
-}
-
-template class Operators<float>;
+template class CpuOperators<float>;
+template class CudaOperators<float>;
