@@ -2,7 +2,8 @@
 #include <memory>
 #include <sstream>
 
-#include "execution_provider.h"
+#include "cpu_provider.h"
+#include "cuda_provider.h"
 #include "inference_session.h"
 #include "input_loader.h"
 #include "model_config.h"
@@ -21,15 +22,20 @@ int main(int argc, char** argv) {
               << std::endl;
     std::cout << "Batch size: " << config.get_batch_size() << std::endl;
 
-    InferenceSession inference_session;
-    inference_session.load_model(config);
-    if (config.get_device() != Device::CPU) {
-        inference_session.set_execution_provider(
-            std::make_unique<ExecutionProvider>(DeviceType::CUDA));
+    InferenceSession session;
+    session.load_model(config);
+
+    std::unique_ptr<ExecutionProvider> provider;
+    Device device = config.get_device();
+    if (device == Device::CPU) {
+        provider = std::make_unique<CpuProvider>();
+    } else if (device == Device::CUDA) {
+        provider = std::make_unique<CudaProvider>();
     } else {
-        inference_session.set_execution_provider(
-            std::make_unique<ExecutionProvider>(DeviceType::CPU));
+        throw std::runtime_error("Unknown device type");
     }
+
+    session.set_execution_provider(std::move(provider));
 
     std::string file = "/home/michal/code/inference_engine/inputs/image_";
     for (int j = 0; j < 1; ++j) {
@@ -38,11 +44,11 @@ int main(int argc, char** argv) {
             oss << file << i << ".ubyte";
             std::string formattedString = oss.str();
             auto input = load_input(formattedString, config);
-            inference_session.set_input("onnx::Flatten_0", input);
+            session.set_input("onnx::Flatten_0", input);
 
-            inference_session.run();
+            session.run();
 
-            auto output = inference_session.get_output("21");
+            auto output = session.get_output("21");
 
             std::cout << "Out: " << output.toString() << "\n";
         }

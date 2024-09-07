@@ -10,13 +10,13 @@ add_library(engine_lib
     tensor.cpp
     input_loader.cpp
     operators.cpp
-    operator_registry.cpp
     graph.cpp
     node.cpp
     onnx_helper.cpp
     model_config.cpp
     inference_session.cpp
-    execution_provider.cpp
+    cpu_provider.cpp
+    cuda_provider.cpp
     ${PROTO_SRCS}
     ${PROTO_HDRS})
 
