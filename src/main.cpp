@@ -2,7 +2,7 @@
 #include <memory>
 #include <sstream>
 
-#include "inference_engine.h"
+#include "execution_provider.h"
 #include "inference_session.h"
 #include "input_loader.h"
 #include "model_config.h"
@@ -16,17 +16,20 @@ int main(int argc, char** argv) {
 
     ModelConfig config(argv[1]);
     std::cout << "Model path: " << config.get_model_path() << std::endl;
-    std::cout << "Execution provider: "
-              << (config.get_execution_provider() == ExecutionProvider::CPU
-                      ? "CPU"
-                      : "CUDA")
+    std::cout << "Device: "
+              << (config.get_device() == Device::CPU ? "CPU" : "CUDA")
               << std::endl;
     std::cout << "Batch size: " << config.get_batch_size() << std::endl;
 
     InferenceSession inference_session;
     inference_session.load_model(config);
-    inference_session.set_execution_provider(
-        std::make_unique<InferenceEngine>(DeviceType::CPU));
+    if (config.get_device() != Device::CPU) {
+        inference_session.set_execution_provider(
+            std::make_unique<ExecutionProvider>(DeviceType::CUDA));
+    } else {
+        inference_session.set_execution_provider(
+            std::make_unique<ExecutionProvider>(DeviceType::CPU));
+    }
 
     std::string file = "/home/michal/code/inference_engine/inputs/image_";
     for (int j = 0; j < 1; ++j) {

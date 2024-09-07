@@ -16,7 +16,7 @@ add_library(engine_lib
     onnx_helper.cpp
     model_config.cpp
     inference_session.cpp
-    inference_engine.cpp
+    execution_provider.cpp
     ${PROTO_SRCS}
     ${PROTO_HDRS})
 

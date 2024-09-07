@@ -12,7 +12,7 @@ enum class DataType {
     FLOAT32,
 };
 
-enum class ExecutionProvider {
+enum class Device {
     CPU,
     CUDA,
 };
@@ -30,9 +30,7 @@ class ModelConfig {
 
     std::string get_model_path() const { return model_path; }
     std::string get_model_format() const { return model_format; }
-    ExecutionProvider get_execution_provider() const {
-        return execution_provider;
-    }
+    Device get_device() const { return device; }
     const std::vector<TensorConfig>& get_inputs() const { return inputs; }
     const std::vector<TensorConfig>& get_outputs() const { return outputs; }
     int get_batch_size() const { return batch_size; }
@@ -40,14 +38,14 @@ class ModelConfig {
    private:
     std::string model_path;
     std::string model_format;
-    ExecutionProvider execution_provider;
+    Device device;
     std::vector<TensorConfig> inputs;
     std::vector<TensorConfig> outputs;
     int batch_size;
 
     void parse_config_file(const std::string& config_file);
     DataType string_to_data_type(const std::string& str);
-    ExecutionProvider string_to_execution_provider(const std::string& str);
+    Device string_to_device(const std::string& str);
     TensorConfig parse_tensor_config(const YAML::Node& node);
 };
 

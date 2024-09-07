@@ -15,8 +15,8 @@ void ModelConfig::parse_config_file(const std::string& config_file) {
 
         model_path = config["model_path"].as<std::string>();
         model_format = config["model_format"].as<std::string>();
-        execution_provider = string_to_execution_provider(
-            config["execution_provider"].as<std::string>());
+        device =
+            string_to_device(config["execution_provider"].as<std::string>());
 
         batch_size = config["batch_size"].as<int>(1);
 
@@ -50,11 +50,10 @@ DataType ModelConfig::string_to_data_type(const std::string& str) {
     throw std::runtime_error("Unknown data type: " + str);
 }
 
-ExecutionProvider ModelConfig::string_to_execution_provider(
-    const std::string& str) {
-    if (str == "CPU") return ExecutionProvider::CPU;
-    if (str == "CUDA") return ExecutionProvider::CUDA;
-    throw std::runtime_error("Unknown execution provider: " + str);
+Device ModelConfig::string_to_device(const std::string& str) {
+    if (str == "CPU") return Device::CPU;
+    if (str == "CUDA") return Device::CUDA;
+    throw std::runtime_error("Unknown device: " + str);
 }
 
 TensorConfig ModelConfig::parse_tensor_config(const YAML::Node& node) {

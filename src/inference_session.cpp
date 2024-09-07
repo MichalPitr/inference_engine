@@ -7,7 +7,7 @@ std::unordered_map<std::string, Tensor<float>> load_weights(
     const onnx::ModelProto& model, const ModelConfig& config);
 
 void InferenceSession::set_execution_provider(
-    std::unique_ptr<InferenceEngine> engine) {
+    std::unique_ptr<ExecutionProvider> engine) {
     engine_ = std::move(engine);
 }
 
@@ -123,10 +123,9 @@ std::unordered_map<std::string, Tensor<float>> load_weights(
         std::vector<uint64_t> shape(initializer.dims().begin(),
                                     initializer.dims().end());
 
-        DeviceType device =
-            (config.get_execution_provider() == ExecutionProvider::CUDA)
-                ? DeviceType::CUDA
-                : DeviceType::CPU;
+        DeviceType device = (config.get_device() == Device::CUDA)
+                                ? DeviceType::CUDA
+                                : DeviceType::CPU;
 
         weights.emplace(initializer.name(),
                         Tensor<float>{data_ptr, std::move(shape), device});

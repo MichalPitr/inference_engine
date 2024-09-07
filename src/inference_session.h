@@ -5,15 +5,15 @@
 #include <string>
 #include <unordered_map>
 
+#include "execution_provider.h"
 #include "graph.h"
-#include "inference_engine.h"
 #include "model_config.h"
 #include "tensor.h"
 
 class InferenceSession {
    public:
     void load_model(const ModelConfig& config);
-    void set_execution_provider(std::unique_ptr<InferenceEngine> engine);
+    void set_execution_provider(std::unique_ptr<ExecutionProvider> engine);
     void set_input(const std::string& name, Tensor<float>& input);
     Tensor<float> get_output(const std::string& name);
     void run();
@@ -21,7 +21,7 @@ class InferenceSession {
    private:
     std::vector<Tensor<float>*> prepare_node_inputs(const Node* node);
 
-    std::unique_ptr<InferenceEngine> engine_;
+    std::unique_ptr<ExecutionProvider> engine_;
     std::unique_ptr<Graph> graph_;
     std::unordered_map<std::string, Tensor<float>> weights_;
 };

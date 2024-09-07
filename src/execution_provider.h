@@ -9,12 +9,11 @@
 #include "operator_registry.h"
 #include "tensor.h"
 
-class InferenceEngine {
+class ExecutionProvider {
    public:
-    InferenceEngine(DeviceType device);
+    ExecutionProvider(DeviceType device);
     Tensor<float> evaluateNode(const Node* node,
                                const std::vector<Tensor<float>*>& inputs);
-    std::vector<Tensor<float>*> prepareNodeInputs(const Node* node);
 
    private:
     void registerCpuOperators();

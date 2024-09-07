@@ -31,10 +31,8 @@ Tensor<float> load_input(const std::string& filename,
         floatValues.push_back(static_cast<float>(byte));
     }
 
-    DeviceType device =
-        (config.get_execution_provider() == ExecutionProvider::CUDA)
-            ? DeviceType::CUDA
-            : DeviceType::CPU;
+    DeviceType device = (config.get_device() == Device::CUDA) ? DeviceType::CUDA
+                                                              : DeviceType::CPU;
 
     return Tensor<float>{floatValues.data(), input_shape, device};
 }

@@ -1,4 +1,4 @@
-#include "inference_engine.h"
+#include "execution_provider.h"
 
 #include <iostream>
 #include <stdexcept>
@@ -7,20 +7,18 @@
 #include "operators.h"
 #include "optypes.h"
 
-void applyConstantFolding(Graph &graph);
-
-InferenceEngine::InferenceEngine(DeviceType device) {
+ExecutionProvider::ExecutionProvider(DeviceType device) {
     device_ = device;
     registerCpuOperators();
     registerCudaOperators();
 }
 
-Tensor<float> InferenceEngine::evaluateNode(
+Tensor<float> ExecutionProvider::evaluateNode(
     const Node *node, const std::vector<Tensor<float> *> &inputs) {
     return registry_.executeOperator(node, inputs, device_);
 }
 
-void InferenceEngine::registerCpuOperators() {
+void ExecutionProvider::registerCpuOperators() {
     registry_.registerCpuOperator(
         OpType::Gemm,
         [](const Node *node, const std::vector<Tensor<float> *> &inputs) {
@@ -71,7 +69,7 @@ void InferenceEngine::registerCpuOperators() {
         });
 }
 
-void InferenceEngine::registerCudaOperators() {
+void ExecutionProvider::registerCudaOperators() {
     registry_.registerCudaOperator(
         OpType::Gemm,
         [](const Node *node, const std::vector<Tensor<float> *> &inputs) {
