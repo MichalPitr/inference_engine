@@ -1,12 +1,62 @@
-#include "model_loader.h"
+#include "inference_session.h"
 
 #include <fstream>
-#include <memory>
 
-#include "graph.h"
-#include "node.h"
+void validate_model(const onnx::ModelProto& model, const ModelConfig& config);
+std::unordered_map<std::string, Tensor<float>> load_weights(
+    const onnx::ModelProto& model, const ModelConfig& config);
 
-std::unique_ptr<InferenceEngine> ModelLoader::load(const ModelConfig& config) {
+void InferenceSession::set_execution_provider(
+    std::unique_ptr<InferenceEngine> engine) {
+    engine_ = std::move(engine);
+}
+
+void InferenceSession::set_input(const std::string& name,
+                                 Tensor<float>& input) {
+    weights_.insert_or_assign(name, input);
+}
+
+Tensor<float> InferenceSession::get_output(const std::string& name) {
+    auto it = weights_.find(name);
+    if (it == weights_.end()) {
+        throw std::runtime_error("Output not found: " + name);
+    }
+    auto res = std::move(it->second);
+    weights_.erase(it);
+    res.to(DeviceType::CPU);
+    return res;
+}
+
+void InferenceSession::run() {
+    for (const auto node : graph_->getTopologicallySortedNodes()) {
+        auto inputs = prepare_node_inputs(node);
+        auto output = engine_->evaluateNode(node, inputs);
+
+        if (output.size() != 0) {
+            weights_[node->getOutputs()[0]] = std::move(output);
+        } else {
+            throw std::runtime_error("Got empty output after inference loop.");
+        }
+    }
+}
+
+std::vector<Tensor<float>*> InferenceSession::prepare_node_inputs(
+    const Node* node) {
+    std::vector<Tensor<float>*> inputs;
+    const auto& input_names = node->getInputs();
+    inputs.reserve(input_names.size());
+
+    for (const auto& input_name : input_names) {
+        auto it = weights_.find(input_name);
+        if (it == weights_.end()) {
+            throw std::runtime_error("Input not found: " + input_name);
+        }
+        inputs.push_back(&it->second);
+    }
+    return inputs;
+}
+
+void InferenceSession::load_model(const ModelConfig& config) {
     onnx::ModelProto model;
     {
         std::ifstream input(config.get_model_path(), std::ios::binary);
@@ -23,19 +73,11 @@ std::unique_ptr<InferenceEngine> ModelLoader::load(const ModelConfig& config) {
 
     validate_model(model, config);
 
-    auto weights = load_weights(model, config);
-    auto graph = std::make_unique<Graph>(model.graph());
-    DeviceType device =
-        (config.get_execution_provider() == ExecutionProvider::CUDA)
-            ? DeviceType::CUDA
-            : DeviceType::CPU;
-
-    return std::make_unique<InferenceEngine>(std::move(graph),
-                                             std::move(weights), device);
+    weights_ = load_weights(model, config);
+    graph_ = std::make_unique<Graph>(model.graph());
 }
 
-void ModelLoader::validate_model(const onnx::ModelProto& model,
-                                 const ModelConfig& config) {
+void validate_model(const onnx::ModelProto& model, const ModelConfig& config) {
     if ((std::size_t)model.graph().input_size() != config.get_inputs().size()) {
         throw std::runtime_error(
             "Mismatch in number of inputs between model and config");
@@ -67,7 +109,7 @@ void ModelLoader::validate_model(const onnx::ModelProto& model,
     }
 }
 
-std::unordered_map<std::string, Tensor<float>> ModelLoader::load_weights(
+std::unordered_map<std::string, Tensor<float>> load_weights(
     const onnx::ModelProto& model, const ModelConfig& config) {
     std::unordered_map<std::string, Tensor<float>> weights;
     for (const auto& initializer : model.graph().initializer()) {

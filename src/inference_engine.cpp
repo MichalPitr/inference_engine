@@ -9,89 +9,15 @@
 
 void applyConstantFolding(Graph &graph);
 
-InferenceEngine::InferenceEngine(
-    std::unique_ptr<Graph> graph,
-    std::unordered_map<std::string, Tensor<float>> weights, DeviceType device)
-    : graph_(std::move(graph)), weights_(std::move(weights)) {
+InferenceEngine::InferenceEngine(DeviceType device) {
     device_ = device;
     registerCpuOperators();
     registerCudaOperators();
-
-    for (auto [_, weight] : weights_) {
-        assert(weight.device() == device_);
-    }
-}
-
-Tensor<float> InferenceEngine::infer(const Tensor<float> &input) {
-    weights_.insert_or_assign(graph_->getInputName(0), std::move(input));
-    assert(weights_[graph_->getInputName(0)].device() == device_);
-
-    for (const auto node : graph_->getTopologicallySortedNodes()) {
-        auto inputs = prepareNodeInputs(node);
-        Tensor<float> output = evaluateNode(node, inputs);
-
-        if (output.size() != 0) {
-            weights_[node->getOutputs()[0]] = std::move(output);
-        } else {
-            throw std::runtime_error("Got empty output after inference loop.");
-        }
-    }
-
-    const auto &graph_output = graph_->getOutputName(0);
-    auto it = weights_.find(graph_output);
-    if (it == weights_.end()) {
-        throw std::runtime_error("Output not found: " + graph_output);
-    }
-    auto res = std::move(it->second);
-    weights_.erase(it);
-    res.to(DeviceType::CPU);
-    return res;
 }
 
 Tensor<float> InferenceEngine::evaluateNode(
     const Node *node, const std::vector<Tensor<float> *> &inputs) {
     return registry_.executeOperator(node, inputs, device_);
-}
-
-std::vector<Tensor<float> *> InferenceEngine::prepareNodeInputs(
-    const Node *node) {
-    std::vector<Tensor<float> *> inputs;
-    const auto &input_names = node->getInputs();
-    inputs.reserve(input_names.size());
-
-    for (const auto &input_name : input_names) {
-        auto it = weights_.find(input_name);
-        if (it == weights_.end()) {
-            throw std::runtime_error("Input not found: " + input_name);
-        }
-        inputs.push_back(&it->second);
-    }
-    return inputs;
-}
-
-void InferenceEngine::applyOptimizations() { applyConstantFolding(); }
-
-void InferenceEngine::applyConstantFolding() {
-    for (auto node : graph_->getTopologicallySortedNodes()) {
-        std::vector<Tensor<float> *> inputs;
-        try {
-            inputs = prepareNodeInputs(node);
-            std::cout << "Found constant node, applying constant folding."
-                      << std::endl;
-        } catch (const std::exception &e) {
-            // not a constant node, skip.
-            std::cout << "Skipping node, not constant." << std::endl;
-            continue;
-        }
-        Tensor<float> res = evaluateNode(node, inputs);
-
-        // Create constant node with same outputs.
-        auto constantNode =
-            std::make_unique<Node>(node->getName(), OpType::Constant);
-        constantNode->addOutput(constantNode->getOutputs()[0]);
-        weights_[constantNode->getOutputs()[0]] = std::move(res);
-        graph_->replaceNode(node, std::move(constantNode));
-    }
 }
 
 void InferenceEngine::registerCpuOperators() {
