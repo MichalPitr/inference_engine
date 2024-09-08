@@ -8,6 +8,7 @@
 #include "execution_provider.h"
 #include "graph.h"
 #include "model_config.h"
+#include "pinned_cpu_allocator.h"
 #include "tensor.h"
 
 class InferenceSession {
@@ -22,6 +23,7 @@ class InferenceSession {
    private:
     std::vector<Tensor<float>*> prepare_node_inputs(const Node* node);
 
+    std::shared_ptr<PinnedCpuAllocator> pinned_allocator_;
     std::unique_ptr<ExecutionProvider> engine_;
     std::unique_ptr<Graph> graph_;
     std::unordered_map<std::string, Tensor<float>> weights_;
