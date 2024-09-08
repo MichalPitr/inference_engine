@@ -37,9 +37,12 @@ int main(int argc, char** argv) {
 
     session.set_execution_provider(std::move(provider));
 
+    // Moves model weights to device memory.
+    session.initialize_provider();
+
     std::string file = "/home/michal/code/inference_engine/inputs/image_";
-    for (int j = 0; j < 1; ++j) {
-        for (int i = 0; i < 1; ++i) {
+    for (int j = 0; j < 5; ++j) {
+        for (int i = 0; i < 100; ++i) {
             std::ostringstream oss;
             oss << file << i << ".ubyte";
             std::string formattedString = oss.str();

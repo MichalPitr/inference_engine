@@ -5,6 +5,7 @@
 #include <string>
 #include <unordered_map>
 
+#include "cuda_allocator.h"
 #include "cuda_memory_pool.h"
 #include "execution_provider.h"
 #include "graph.h"
@@ -18,8 +19,15 @@ class CudaProvider : public ExecutionProvider {
     Tensor<float> evaluateNode(
         const Node *node, const std::vector<Tensor<float> *> &inputs) override;
 
+    void transferWeightsToDevice(
+        std::unordered_map<std::string, Tensor<float>> &weights) override {
+        for (auto &[name, tensor] : weights) {
+            tensor.to(DeviceType::CUDA);
+        }
+    }
+
    private:
-    std::unique_ptr<CudaMemoryPool> memory_pool_;
+    std::shared_ptr<CudaAllocator> allocator_;
 
     // Operators
     Tensor<float> gemm(const Node *node,

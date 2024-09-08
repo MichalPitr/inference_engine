@@ -6,11 +6,15 @@
 
 void validate_model(const onnx::ModelProto& model, const ModelConfig& config);
 std::unordered_map<std::string, Tensor<float>> load_weights(
-    const onnx::ModelProto& model, const ModelConfig& config);
+    const onnx::ModelProto& model);
 
 void InferenceSession::set_execution_provider(
     std::unique_ptr<ExecutionProvider> engine) {
     engine_ = std::move(engine);
+}
+
+void InferenceSession::initialize_provider() {
+    engine_->transferWeightsToDevice(weights_);
 }
 
 void InferenceSession::set_input(const std::string& name,
@@ -75,7 +79,7 @@ void InferenceSession::load_model(const ModelConfig& config) {
 
     validate_model(model, config);
 
-    weights_ = load_weights(model, config);
+    weights_ = load_weights(model);
     graph_ = std::make_unique<Graph>(model.graph());
 }
 
@@ -112,7 +116,7 @@ void validate_model(const onnx::ModelProto& model, const ModelConfig& config) {
 }
 
 std::unordered_map<std::string, Tensor<float>> load_weights(
-    const onnx::ModelProto& model, const ModelConfig& config) {
+    const onnx::ModelProto& model) {
     std::unordered_map<std::string, Tensor<float>> weights;
     for (const auto& initializer : model.graph().initializer()) {
         if (initializer.data_type() != onnx::TensorProto::FLOAT) {
@@ -124,10 +128,6 @@ std::unordered_map<std::string, Tensor<float>> load_weights(
 
         std::vector<uint64_t> shape(initializer.dims().begin(),
                                     initializer.dims().end());
-
-        // DeviceType device = (config.get_device() == Device::CUDA)
-        //                         ? DeviceType::CUDA
-        //                         : DeviceType::CPU;
 
         weights.emplace(initializer.name(),
                         Tensor<float>{data_ptr, std::move(shape)});

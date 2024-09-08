@@ -67,7 +67,9 @@
         "any": "cpp",
         "optional": "cpp",
         "variant": "cpp",
-        "stack": "cpp"
+        "stack": "cpp",
+        "bitset": "cpp",
+        "__nullptr": "cpp"
     },
     "cmake.debugConfig": {
         "args": [

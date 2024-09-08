@@ -13,6 +13,12 @@ class CpuProvider : public ExecutionProvider {
    public:
     Tensor<float> evaluateNode(
         const Node *node, const std::vector<Tensor<float> *> &inputs) override;
+    void transferWeightsToDevice(
+        [[maybe_unused]] std::unordered_map<std::string, Tensor<float>>
+            &weights) override {
+        // No-op for CPU provider.
+        return;
+    }
 
    private:
     // Operators

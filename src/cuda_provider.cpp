@@ -14,11 +14,14 @@ template <typename T>
 void validate_gemm_inputs(const Tensor<T> &A, const Tensor<T> &B,
                           const Tensor<T> &bias, bool transA, bool transB);
 
-CudaProvider::CudaProvider()
-    : memory_pool_(std::make_unique<CudaMemoryPool>()) {}
+CudaProvider::CudaProvider() : allocator_(std::make_shared<CudaAllocator>()) {}
 
 Tensor<float> CudaProvider::evaluateNode(
     const Node *node, const std::vector<Tensor<float> *> &inputs) {
+    for (auto input : inputs) {
+        input->to(DeviceType::CUDA);
+    }
+
     switch (node->getOpType()) {
         case OpType::Gemm:
             return gemm(node, inputs);
@@ -57,7 +60,7 @@ Tensor<float> CudaProvider::gemm(const Node *node,
 
     std::vector<uint64_t> dims{N, K};
 
-    Tensor<float> out{std::move(dims)};
+    Tensor<float> out{std::move(dims), allocator_};
 
     assert(A.device() == DeviceType::CUDA);
     const float *AData = A.data();
@@ -68,7 +71,6 @@ Tensor<float> CudaProvider::gemm(const Node *node,
               alpha, beta);
 
     return out;
-    return CudaOperators<float>::gemm(A, B, bias, transA, transB, alpha, beta);
 }
 
 Tensor<float> CudaProvider::flatten(
