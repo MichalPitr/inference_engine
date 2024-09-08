@@ -50,7 +50,7 @@ int main(int argc, char** argv) {
 
     std::string file = "/home/michal/code/inference_engine/inputs/image_";
 
-    int loops{20};
+    int loops{1};
     int inferences{100};
     std::vector<Tensor<float>> inputs;
     for (int j = 0; j < loops; ++j) {

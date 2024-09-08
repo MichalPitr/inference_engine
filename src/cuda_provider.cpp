@@ -90,7 +90,11 @@ Tensor<float> CudaProvider::relu([[maybe_unused]] const Node *node,
     if (inputs.size() != 1) {
         throw std::runtime_error("Relu operation expects 1 input");
     }
-    return CudaOperators<float>::relu(*inputs[0]);
+
+    const Tensor<float> &in = *inputs[0];
+    Tensor<float> out(in.shape(), allocator_);
+    relu_cuda(in.data(), out.data(), out.size());
+    return out;
 }
 
 Tensor<float> CudaProvider::add([[maybe_unused]] const Node *node,
@@ -98,5 +102,9 @@ Tensor<float> CudaProvider::add([[maybe_unused]] const Node *node,
     if (inputs.size() != 2) {
         throw std::runtime_error("Add operation expects 2 inputs");
     }
-    return CudaOperators<float>::add(*inputs[0], *inputs[1]);
+    const Tensor<float> &A = *inputs[0];
+    const Tensor<float> &B = *inputs[1];
+    Tensor<float> out(A.shape(), allocator_);
+    add_cuda(A.data(), B.data(), out.data(), out.size());
+    return out;
 }

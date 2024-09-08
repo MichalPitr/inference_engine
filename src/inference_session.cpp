@@ -1,6 +1,8 @@
 #include "inference_session.h"
 
+#include <chrono>
 #include <fstream>
+#include <iostream>
 
 #include "device.h"
 
@@ -20,7 +22,7 @@ void InferenceSession::initialize_provider() {
 
 void InferenceSession::set_input(const std::string& name,
                                  Tensor<float>& input) {
-    weights_.insert_or_assign(name, input);
+    weights_.insert_or_assign(name, std::move(input));
 }
 
 Tensor<float> InferenceSession::get_output(const std::string& name) {

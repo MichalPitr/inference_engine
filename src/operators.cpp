@@ -38,7 +38,7 @@ Tensor<T> CpuOperators<T>::gemm(const Tensor<T>& A, const Tensor<T>& B,
 }
 
 template <typename T>
-Tensor<T> CpuOperators<T>::flatten(const Tensor<T>& tensor, uint64_t axis) {
+Tensor<T> CpuOperators<T>::flatten(Tensor<T>& tensor, uint64_t axis) {
     return base_flatten(tensor, axis);
 }
 
@@ -95,24 +95,24 @@ Tensor<T> CudaOperators<T>::gemm(const Tensor<T>& A, const Tensor<T>& B,
 }
 
 template <typename T>
-Tensor<T> CudaOperators<T>::flatten(const Tensor<T>& tensor, uint64_t axis) {
+Tensor<T> CudaOperators<T>::flatten(Tensor<T>& tensor, uint64_t axis) {
     return base_flatten(tensor, axis);
 }
 
-template <typename T>
-Tensor<T> CudaOperators<T>::relu(const Tensor<T>& tensor) {
-    Tensor<T> output(tensor);
-    relu_cuda(output.data(), output.size());
-    return output;
-}
+// template <typename T>
+// Tensor<T> CudaOperators<T>::relu(const Tensor<T>& tensor) {
+//     Tensor<T> output(tensor);
+//     relu_cuda(output.data(), output.size());
+//     return output;
+// }
 
-template <typename T>
-Tensor<T> CudaOperators<T>::add(const Tensor<T>& A, const Tensor<T>& B) {
-    assert(A.shape() == B.shape());
-    Tensor<T> output(A);
-    add_cuda(output.data(), B.data(), output.size());
-    return output;
-}
+// template <typename T>
+// Tensor<T> CudaOperators<T>::add(const Tensor<T>& A, const Tensor<T>& B) {
+//     assert(A.shape() == B.shape());
+//     Tensor<T> output(A);
+//     add_cuda(output.data(), B.data(), output.size());
+//     return output;
+// }
 
 //------------------//
 //      shared      //
@@ -159,7 +159,7 @@ void validate_gemm_inputs(const Tensor<T>& A, const Tensor<T>& B,
 }
 
 template <typename T>
-Tensor<T> base_flatten(const Tensor<T>& tensor, uint64_t axis) {
+Tensor<T> base_flatten(Tensor<T>& tensor, uint64_t axis) {
     assert(axis <= tensor.shape().size());
 
     uint64_t dimBefore = 1;
@@ -172,9 +172,10 @@ Tensor<T> base_flatten(const Tensor<T>& tensor, uint64_t axis) {
         dimAfter *= tensor.shape()[i];
     }
 
-    Tensor<T> flat(tensor);
-    flat.setShape({dimBefore, dimAfter});
-    return flat;
+    // TODO: This causes call to cudaMemcpy when on gpu, which is slow.
+    // Tensor<T> flat(tensor);
+    tensor.setShape({dimBefore, dimAfter});
+    return tensor;
 }
 
 template class CpuOperators<float>;

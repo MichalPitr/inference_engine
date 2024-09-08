@@ -31,22 +31,24 @@ void gemm_cuda(const float *A, const float *B, const float *bias, float *out,
                                          transB, alpha, beta);
 }
 
-__global__ void relu_kernel(float *X, int n) {
+__global__ void relu_kernel(const float *in, float *out, int n) {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
     if (idx < n) {
-        X[idx] = X[idx] < 0 ? 0 : X[idx];
+        out[idx] = in[idx] < 0 ? 0 : in[idx];
     }
 }
 
-void relu_cuda(float *X, int n) { relu_kernel<<<ceil(n / 32.0), 32>>>(X, n); }
+void relu_cuda(const float *in, float *out, int n) {
+    relu_kernel<<<ceil(n / 32.0), 32>>>(in, out, n);
+}
 
-__global__ void add_kernel(float *A, const float *B, int n) {
+__global__ void add_kernel(const float *A, const float *B, float *out, int n) {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
     if (idx < n) {
-        A[idx] += B[idx];
+        out[idx] = A[idx] + B[idx];
     }
 }
 
-void add_cuda(float *A, const float *B, int n) {
-    add_kernel<<<ceil(n / 32.0), 32>>>(A, B, n);
+void add_cuda(const float *A, const float *B, float *out, int n) {
+    add_kernel<<<ceil(n / 32.0), 32>>>(A, B, out, n);
 }

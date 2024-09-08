@@ -25,7 +25,7 @@ class CudaAllocator : public Allocator {
     }
     void deallocate(void* ptr) override {
         if (pool_) {
-            pool_->deallocate(ptr);
+            return pool_->deallocate(ptr);
         }
         // fallback if no pool configured.
         cudaFree(ptr);
