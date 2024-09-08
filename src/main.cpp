@@ -49,24 +49,29 @@ int main(int argc, char** argv) {
               << " microseconds" << std::endl;
 
     std::string file = "/home/michal/code/inference_engine/inputs/image_";
-    start = std::chrono::high_resolution_clock::now();
 
-    int loops{1};
+    int loops{20};
     int inferences{100};
+    std::vector<Tensor<float>> inputs;
     for (int j = 0; j < loops; ++j) {
         for (int i = 0; i < inferences; ++i) {
             std::ostringstream oss;
             oss << file << i << ".ubyte";
             std::string formattedString = oss.str();
             auto input = load_input(formattedString, config);
-            session.set_input("onnx::Flatten_0", input);
-
-            session.run();
-
-            auto output = session.get_output("21");
-
-            std::cout << "Out: " << output.toString() << "\n";
+            inputs.push_back(input);
         }
+    }
+
+    start = std::chrono::high_resolution_clock::now();
+    for (auto input : inputs) {
+        session.set_input("onnx::Flatten_0", input);
+
+        session.run();
+
+        auto output = session.get_output("21");
+
+        std::cout << "Out: " << output.toString() << "\n";
     }
 
     int total_inferences{loops * inferences};
