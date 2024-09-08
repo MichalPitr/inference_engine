@@ -52,6 +52,8 @@ int main(int argc, char** argv) {
 
     int loops{1};
     int inferences{100};
+    int total_inferences{loops * inferences};
+
     std::vector<Tensor<float>> inputs;
     for (int j = 0; j < loops; ++j) {
         for (int i = 0; i < inferences; ++i) {
@@ -63,19 +65,22 @@ int main(int argc, char** argv) {
         }
     }
 
+    std::vector<Tensor<float>> res;
+    res.reserve(total_inferences);
     start = std::chrono::high_resolution_clock::now();
-    for (auto input : inputs) {
-        session.set_input("onnx::Flatten_0", input);
+    for (int i = 0; i < total_inferences; ++i) {
+        session.set_input("onnx::Flatten_0", inputs[i]);
 
         session.run();
 
-        auto output = session.get_output("21");
+        res.push_back(session.get_output("21"));
+    }
+    end = std::chrono::high_resolution_clock::now();
 
-        std::cout << "Out: " << output.toString() << "\n";
+    for (auto v : res) {
+        std::cout << "Out: " << v.toString() << "\n";
     }
 
-    int total_inferences{loops * inferences};
-    end = std::chrono::high_resolution_clock::now();
     duration =
         std::chrono::duration_cast<std::chrono::microseconds>(end - start);
 
