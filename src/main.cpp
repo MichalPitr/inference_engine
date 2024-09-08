@@ -50,7 +50,7 @@ int main(int argc, char** argv) {
 
     std::string file = "/home/michal/code/inference_engine/inputs/image_";
 
-    int loops{1};
+    int loops{20};
     int inferences{100};
     int total_inferences{loops * inferences};
 

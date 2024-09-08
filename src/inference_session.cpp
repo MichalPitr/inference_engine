@@ -16,7 +16,7 @@ void InferenceSession::set_execution_provider(
 }
 
 void InferenceSession::initialize_provider() {
-    pinned_allocator_ = std::make_shared<PinnedCpuAllocator>();
+    // pinned_allocator_ = std::make_shared<PinnedCpuAllocator>();
     engine_->transferWeightsToDevice(weights_);
 }
 
@@ -32,7 +32,7 @@ Tensor<float> InferenceSession::get_output(const std::string& name) {
     }
     auto res = std::move(it->second);
     weights_.erase(it);
-    res.to(DeviceType::CPU, pinned_allocator_);
+    res.to(DeviceType::CPU);
     return res;
 }
 
