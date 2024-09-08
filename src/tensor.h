@@ -37,7 +37,8 @@ class Tensor {
     ~Tensor();
 
     // Method to move tensor to another device
-    void to(DeviceType newDevice);
+    void to(DeviceType newDevice, std::shared_ptr<Allocator> newAllocator =
+                                      std::make_shared<CpuAllocator>());
 
     // Modifications
     void setShape(const std::vector<size_t>& newShape);

@@ -19,7 +19,7 @@ CudaProvider::CudaProvider() : allocator_(std::make_shared<CudaAllocator>()) {}
 Tensor<float> CudaProvider::evaluateNode(
     const Node *node, const std::vector<Tensor<float> *> &inputs) {
     for (auto input : inputs) {
-        input->to(DeviceType::CUDA);
+        input->to(DeviceType::CUDA, allocator_);
     }
 
     switch (node->getOpType()) {

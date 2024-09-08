@@ -22,7 +22,7 @@ class CudaProvider : public ExecutionProvider {
     void transferWeightsToDevice(
         std::unordered_map<std::string, Tensor<float>> &weights) override {
         for (auto &[name, tensor] : weights) {
-            tensor.to(DeviceType::CUDA);
+            tensor.to(DeviceType::CUDA, allocator_);
         }
     }
 

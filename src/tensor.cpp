@@ -115,20 +115,13 @@ void Tensor<T>::freeMemory() {
 }
 
 template <typename T>
-void Tensor<T>::to(DeviceType newDevice) {
+void Tensor<T>::to(DeviceType newDevice,
+                   std::shared_ptr<Allocator> newAllocator) {
     if (newDevice == allocator_->getDeviceType()) return;
 
-    std::shared_ptr<Allocator> newAllocator;
-    if (newDevice == DeviceType::CPU) {
-        newAllocator = std::make_shared<CpuAllocator>();
-    }
-#ifdef USE_CUDA
-    else if (newDevice == DeviceType::CUDA) {
-        newAllocator = std::make_shared<CudaAllocator>();
-    }
-#endif
-    else {
-        throw std::runtime_error("Unsupported device type");
+    if (newAllocator->getDeviceType() != newDevice) {
+        throw std::runtime_error(
+            "Provided allocator does not match the requested device type");
     }
 
     T* newData = static_cast<T*>(newAllocator->allocate(sizeof(T) * size_));
@@ -143,7 +136,7 @@ void Tensor<T>::to(DeviceType newDevice) {
         throw std::runtime_error("Unsupported device transition");
     }
 
-    freeMemory();
+    allocator_->deallocate(data_);
     data_ = newData;
     allocator_ = newAllocator;
 }

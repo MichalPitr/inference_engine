@@ -106,8 +106,8 @@ TEST(TensorTest, DeviceTransferCPUtoCUDA) {
     for (size_t i = 0; i < cpuTensor.size(); ++i) {
         cpuTensor.data()[i] = static_cast<float>(i);
     }
-
-    cpuTensor.to(DeviceType::CUDA);
+    auto cudaAllocator = std::make_shared<CudaAllocator>();
+    cpuTensor.to(DeviceType::CUDA, cudaAllocator);
     EXPECT_EQ(cpuTensor.device(), DeviceType::CUDA);
 
     // Create a new CPU tensor to check data

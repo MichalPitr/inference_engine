@@ -1,3 +1,4 @@
+#include <chrono>
 #include <iostream>
 #include <memory>
 #include <sstream>
@@ -38,11 +39,22 @@ int main(int argc, char** argv) {
     session.set_execution_provider(std::move(provider));
 
     // Moves model weights to device memory.
+    auto start = std::chrono::high_resolution_clock::now();
     session.initialize_provider();
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration =
+        std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+
+    std::cout << "initialize_provider took: " << duration.count()
+              << " microseconds" << std::endl;
 
     std::string file = "/home/michal/code/inference_engine/inputs/image_";
-    for (int j = 0; j < 5; ++j) {
-        for (int i = 0; i < 100; ++i) {
+    start = std::chrono::high_resolution_clock::now();
+
+    int loops{1};
+    int inferences{100};
+    for (int j = 0; j < loops; ++j) {
+        for (int i = 0; i < inferences; ++i) {
             std::ostringstream oss;
             oss << file << i << ".ubyte";
             std::string formattedString = oss.str();
@@ -56,6 +68,17 @@ int main(int argc, char** argv) {
             std::cout << "Out: " << output.toString() << "\n";
         }
     }
+
+    int total_inferences{loops * inferences};
+    end = std::chrono::high_resolution_clock::now();
+    duration =
+        std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+
+    std::cout << "Loop took: " << duration.count() << " microseconds"
+              << std::endl;
+    std::cout << "Avg inference duration: "
+              << duration.count() / total_inferences << " microseconds"
+              << std::endl;
 
     return 0;
 }
