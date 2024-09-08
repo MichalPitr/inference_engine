@@ -19,9 +19,8 @@ CMake will complain if you are missing some system dependencies: protobuf, gtest
 
 ## Backlog:
 
-* Implement server for receiving base64 encoded inputs.
-* Implement online batching for server-received requests.
-* Add CUDA execution provider.
+* Optimize Cuda Provider.
+* Implement batching.
 * Add graph optimizations.
 
 ## Contributing
