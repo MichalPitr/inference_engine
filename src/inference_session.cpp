@@ -2,6 +2,8 @@
 
 #include <fstream>
 
+#include "device.h"
+
 void validate_model(const onnx::ModelProto& model, const ModelConfig& config);
 std::unordered_map<std::string, Tensor<float>> load_weights(
     const onnx::ModelProto& model, const ModelConfig& config);
@@ -33,7 +35,7 @@ void InferenceSession::run() {
         auto output = engine_->evaluateNode(node, inputs);
 
         if (output.size() != 0) {
-            weights_[node->getOutputs()[0]] = std::move(output);
+            weights_.insert_or_assign(node->getOutputs()[0], std::move(output));
         } else {
             throw std::runtime_error("Got empty output after inference loop.");
         }
@@ -123,12 +125,12 @@ std::unordered_map<std::string, Tensor<float>> load_weights(
         std::vector<uint64_t> shape(initializer.dims().begin(),
                                     initializer.dims().end());
 
-        DeviceType device = (config.get_device() == Device::CUDA)
-                                ? DeviceType::CUDA
-                                : DeviceType::CPU;
+        // DeviceType device = (config.get_device() == Device::CUDA)
+        //                         ? DeviceType::CUDA
+        //                         : DeviceType::CPU;
 
         weights.emplace(initializer.name(),
-                        Tensor<float>{data_ptr, std::move(shape), device});
+                        Tensor<float>{data_ptr, std::move(shape)});
     }
     return weights;
 }

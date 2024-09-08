@@ -24,9 +24,9 @@ Tensor<T> CpuOperators<T>::gemm(const Tensor<T>& A, const Tensor<T>& B,
     uint64_t K = transB ? B.shape()[0] : B.shape()[1];
     std::vector<uint64_t> dims{N, K};
 
-    Tensor<T> out{std::move(dims), A.device()};
+    Tensor<T> out{std::move(dims)};
 
-    assert(A.device() == DeviceType::CPU);
+    // assert(A.device() == DeviceType::CPU);
     const T* AData = A.data();
     const T* BData = B.data();
     const T* BiasData = bias.data();
@@ -81,7 +81,7 @@ Tensor<T> CudaOperators<T>::gemm(const Tensor<T>& A, const Tensor<T>& B,
 
     std::vector<uint64_t> dims{N, K};
 
-    Tensor<T> out{std::move(dims), A.device()};
+    Tensor<T> out{std::move(dims)};
 
     assert(A.device() == DeviceType::CUDA);
     const T* AData = A.data();

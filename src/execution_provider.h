@@ -6,6 +6,7 @@
 
 class ExecutionProvider {
    public:
+    ExecutionProvider() = default;
     virtual ~ExecutionProvider() = default;
     virtual Tensor<float> evaluateNode(
         const Node* node, const std::vector<Tensor<float>*>& inputs) = 0;

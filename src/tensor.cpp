@@ -7,33 +7,42 @@
 #include <sstream>
 #include <stdexcept>
 
+#include "cpu_allocator.h"
+#include "cuda_allocator.h"
+
 #ifdef USE_CUDA
 #include <cuda_runtime.h>
 #endif
 
 template <typename T>
-Tensor<T>::Tensor(const std::vector<uint64_t>& shape, DeviceType device)
-    : shape_(shape), device_(device) {
-    size_ = std::accumulate(shape.begin(), shape.end(), 1ULL,
-                            std::multiplies<uint64_t>());
-    allocateMemory();
+Tensor<T>::Tensor(const std::vector<size_t>& shape,
+                  std::shared_ptr<Allocator> alloc)
+    : data_(nullptr),
+      shape_(shape),
+      size_(std::accumulate(shape.begin(), shape.end(), 1ULL,
+                            std::multiplies<size_t>())),
+      allocator_(std::move(alloc)) {
+    allocateAndCopy(nullptr);
 }
 
 template <typename T>
-Tensor<T>::Tensor(const T* data, const std::vector<uint64_t>& shape,
-                  DeviceType device)
-    : shape_(shape), device_(device) {
-    size_ = std::accumulate(shape.begin(), shape.end(), 1ULL,
-                            std::multiplies<uint64_t>());
-    allocateMemory();
-    copyFrom(data, size_);
+Tensor<T>::Tensor(const T* data, const std::vector<size_t>& shape,
+                  std::shared_ptr<Allocator> alloc)
+    : data_(nullptr),
+      shape_(shape),
+      size_(std::accumulate(shape.begin(), shape.end(), 1ULL,
+                            std::multiplies<size_t>())),
+      allocator_(std::move(alloc)) {
+    allocateAndCopy(data);
 }
 
 template <typename T>
 Tensor<T>::Tensor(const Tensor& other)
-    : shape_(other.shape_), size_(other.size_), device_(other.device_) {
-    allocateMemory();
-    copyFrom(other);
+    : data_(nullptr),
+      shape_(other.shape_),
+      size_(other.size_),
+      allocator_(other.allocator_) {
+    allocateAndCopy(other.data_);
 }
 
 template <typename T>
@@ -41,8 +50,36 @@ Tensor<T>::Tensor(Tensor&& other) noexcept
     : data_(other.data_),
       shape_(std::move(other.shape_)),
       size_(other.size_),
-      device_(other.device_) {
+      allocator_(std::move(other.allocator_)) {
     other.data_ = nullptr;
+    other.size_ = 0;
+}
+
+template <typename T>
+Tensor<T>& Tensor<T>::operator=(const Tensor& other) {
+    if (this != &other) {
+        freeMemory();
+        data_ = nullptr;
+        shape_ = other.shape_;
+        size_ = other.size_;
+        allocator_ = other.allocator_;
+        allocateAndCopy(other.data_);
+    }
+    return *this;
+}
+
+template <typename T>
+Tensor<T>& Tensor<T>::operator=(Tensor&& other) noexcept {
+    if (this != &other) {
+        freeMemory();
+        data_ = other.data_;
+        shape_ = std::move(other.shape_);
+        size_ = other.size_;
+        allocator_ = std::move(other.allocator_);
+        other.data_ = nullptr;
+        other.size_ = 0;
+    }
+    return *this;
 }
 
 template <typename T>
@@ -51,118 +88,74 @@ Tensor<T>::~Tensor() {
 }
 
 template <typename T>
-Tensor<T>& Tensor<T>::operator=(Tensor&& other) noexcept {
-    if (this != &other) {
-        data_ = other.data_;
-        shape_ = std::move(other.shape_);
-        size_ = other.size_;
-        device_ = other.device_;
-        other.data_ = nullptr;
-    }
-    return *this;
-}
+void Tensor<T>::allocateAndCopy(const T* src) {
+    data_ = static_cast<T*>(allocator_->allocate(sizeof(T) * size_));
 
-template <typename T>
-Tensor<T>& Tensor<T>::operator=(const Tensor& other) {
-    if (this != &other) {
-        data_ = other.data_;
-        shape_ = other.shape_;
-        size_ = other.size_;
-        device_ = other.device_;
-    }
-    return *this;
-}
-
-template <typename T>
-void Tensor<T>::copyFrom(const Tensor& other) {
-    if (device_ == DeviceType::CPU && other.device_ == DeviceType::CPU) {
-        std::memcpy(data_, other.data_, size_ * sizeof(T));
-    }
+    if (src) {
+        if (allocator_->getDeviceType() == DeviceType::CPU) {
+            std::memcpy(data_, src, size_ * sizeof(T));
+        }
 #ifdef USE_CUDA
-    else if (device_ == DeviceType::CUDA && other.device_ == DeviceType::CUDA) {
-        cudaMemcpy(data_, other.data_, size_ * sizeof(T),
-                   cudaMemcpyDeviceToDevice);
-    } else if (device_ == DeviceType::CPU &&
-               other.device_ == DeviceType::CUDA) {
-        cudaMemcpy(data_, other.data_, size_ * sizeof(T),
-                   cudaMemcpyDeviceToHost);
-    } else if (device_ == DeviceType::CUDA &&
-               other.device_ == DeviceType::CPU) {
-        cudaMemcpy(data_, other.data_, size_ * sizeof(T),
-                   cudaMemcpyHostToDevice);
-    }
-#else
-    else if (device_ == DeviceType::CUDA || other.device_ == DeviceType::CUDA) {
-        throw std::runtime_error("CUDA support not enabled.");
-    }
+        else if (allocator_->getDeviceType() == DeviceType::CUDA) {
+            cudaMemcpy(data_, src, size_ * sizeof(T), cudaMemcpyHostToDevice);
+        }
 #endif
-}
-
-template <typename T>
-void Tensor<T>::copyFrom(const T* data, uint64_t count) {
-    if (device_ == DeviceType::CPU) {
-        std::memcpy(data_, data, count * sizeof(T));
-    }
-#ifdef USE_CUDA
-    else if (device_ == DeviceType::CUDA) {
-        cudaMemcpy(data_, data, count * sizeof(T), cudaMemcpyHostToDevice);
-    }
-#else
-    else {
-        throw std::runtime_error("CUDA support not enabled.");
-    }
-#endif
-}
-
-template <typename T>
-void Tensor<T>::allocateMemory() {
-    if (device_ == DeviceType::CPU) {
-        data_ = new T[size_];
-    } else {
-#ifdef USE_CUDA
-        cudaMalloc(&data_, size_ * sizeof(T));
-#else
-        throw std::runtime_error("CUDA support not enabled.");
-#endif
+        else {
+            throw std::runtime_error("Unsupported device type");
+        }
     }
 }
 
 template <typename T>
 void Tensor<T>::freeMemory() {
     if (data_) {
-        if (device_ == DeviceType::CPU) {
-            delete[] data_;
-        } else {
-#ifdef USE_CUDA
-            cudaFree(data_);
-#else
-            throw std::runtime_error("CUDA support not enabled.");
-#endif
-        }
+        allocator_->deallocate(data_);
         data_ = nullptr;
     }
 }
 
 template <typename T>
 void Tensor<T>::to(DeviceType newDevice) {
-    if (newDevice == device_) return;
+    if (newDevice == allocator_->getDeviceType()) return;
 
-#ifdef USE_CUDA
-    T* newData;
+    std::shared_ptr<Allocator> newAllocator;
     if (newDevice == DeviceType::CPU) {
-        newData = new T[size_];
+        newAllocator = std::make_shared<CpuAllocator>();
+    }
+#ifdef USE_CUDA
+    else if (newDevice == DeviceType::CUDA) {
+        newAllocator = std::make_shared<CudaAllocator>();
+    }
+#endif
+    else {
+        throw std::runtime_error("Unsupported device type");
+    }
+
+    T* newData = static_cast<T*>(newAllocator->allocate(sizeof(T) * size_));
+
+    if (allocator_->getDeviceType() == DeviceType::CPU &&
+        newDevice == DeviceType::CUDA) {
+        cudaMemcpy(newData, data_, size_ * sizeof(T), cudaMemcpyHostToDevice);
+    } else if (allocator_->getDeviceType() == DeviceType::CUDA &&
+               newDevice == DeviceType::CPU) {
         cudaMemcpy(newData, data_, size_ * sizeof(T), cudaMemcpyDeviceToHost);
     } else {
-        cudaMalloc(&newData, size_ * sizeof(T));
-        cudaMemcpy(newData, data_, size_ * sizeof(T), cudaMemcpyHostToDevice);
+        throw std::runtime_error("Unsupported device transition");
     }
 
     freeMemory();
     data_ = newData;
-    device_ = newDevice;
-#else
-    throw std::runtime_error("CUDA support not enabled.");
-#endif
+    allocator_ = newAllocator;
+}
+
+template <typename T>
+void Tensor<T>::setShape(const std::vector<size_t>& newShape) {
+    size_t size = std::accumulate(newShape.begin(), newShape.end(), 1ULL,
+                                  std::multiplies<size_t>());
+    if (size != size_) {
+        throw std::runtime_error("Expected setShape to match current shape.");
+    }
+    shape_ = std::move(newShape);
 }
 
 template <typename T>
@@ -187,7 +180,7 @@ std::string Tensor<T>::toString() const {
     std::ostringstream oss;
     oss << "Tensor(" << stringShape() << ") [";
 
-    if (device_ == DeviceType::CPU) {
+    if (device() == DeviceType::CPU) {
         for (uint64_t i = 0; i < size_; ++i) {
             oss << std::setprecision(4) << data_[i];
             if (i < size_ - 1) oss << ", ";

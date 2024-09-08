@@ -5,16 +5,22 @@
 #include <string>
 #include <unordered_map>
 
+#include "cuda_memory_pool.h"
 #include "execution_provider.h"
 #include "graph.h"
 #include "tensor.h"
 
 class CudaProvider : public ExecutionProvider {
    public:
+    CudaProvider();
+    ~CudaProvider() override = default;
+
     Tensor<float> evaluateNode(
         const Node *node, const std::vector<Tensor<float> *> &inputs) override;
 
    private:
+    std::unique_ptr<CudaMemoryPool> memory_pool_;
+
     // Operators
     Tensor<float> gemm(const Node *node,
                        const std::vector<Tensor<float> *> &inputs);
