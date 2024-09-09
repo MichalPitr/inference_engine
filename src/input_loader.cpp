@@ -30,5 +30,5 @@ Tensor<float> load_input(const std::string& filename,
     for (unsigned char byte : bytes) {
         floatValues.push_back(static_cast<float>(byte));
     }
-    return Tensor<float>{floatValues.data(), input_shape};
+    return Tensor<float>{std::move(floatValues.data()), input_shape};
 }

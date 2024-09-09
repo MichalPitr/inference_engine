@@ -20,8 +20,7 @@ void InferenceSession::initialize_provider() {
     engine_->transferWeightsToDevice(weights_);
 }
 
-void InferenceSession::set_input(const std::string& name,
-                                 Tensor<float>& input) {
+void InferenceSession::set_input(const std::string& name, Tensor<float> input) {
     weights_.insert_or_assign(name, std::move(input));
 }
 

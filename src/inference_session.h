@@ -16,7 +16,7 @@ class InferenceSession {
     void load_model(const ModelConfig& config);
     void set_execution_provider(std::unique_ptr<ExecutionProvider> engine);
     void initialize_provider();
-    void set_input(const std::string& name, Tensor<float>& input);
+    void set_input(const std::string& name, Tensor<float> input);
     Tensor<float> get_output(const std::string& name);
     void run();
 

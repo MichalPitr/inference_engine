@@ -53,15 +53,14 @@ int main(int argc, char** argv) {
     int loops{20};
     int inferences{100};
     int total_inferences{loops * inferences};
-
     std::vector<Tensor<float>> inputs;
+    inputs.reserve(total_inferences);
     for (int j = 0; j < loops; ++j) {
         for (int i = 0; i < inferences; ++i) {
             std::ostringstream oss;
             oss << file << i << ".ubyte";
             std::string formattedString = oss.str();
-            auto input = load_input(formattedString, config);
-            inputs.push_back(input);
+            inputs.push_back(load_input(formattedString, config));
         }
     }
 
@@ -69,7 +68,7 @@ int main(int argc, char** argv) {
     res.reserve(total_inferences);
     start = std::chrono::high_resolution_clock::now();
     for (int i = 0; i < total_inferences; ++i) {
-        session.set_input("onnx::Flatten_0", inputs[i]);
+        session.set_input("onnx::Flatten_0", std::move(inputs[i]));
 
         session.run();
 

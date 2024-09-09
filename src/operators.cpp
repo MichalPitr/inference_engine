@@ -172,8 +172,6 @@ Tensor<T> base_flatten(Tensor<T>& tensor, uint64_t axis) {
         dimAfter *= tensor.shape()[i];
     }
 
-    // TODO: This causes call to cudaMemcpy when on gpu, which is slow.
-    // Tensor<T> flat(tensor);
     tensor.setShape({dimBefore, dimAfter});
     return tensor;
 }
