@@ -5,7 +5,7 @@
 // gemm_cpu returns out = A * B + bias
 // A is (n, m)
 // B is (m, k)
-// bias is (n, k) in general, but often (n, 1) and broadcasted
+// bias is assumed to be (n, 1) and broadcasted
 // out is (n, k)
 void gemm_cpu(const float* A, const float* B, const float* bias, float* out,
               const int n, const int m, const int k, const bool transA,
@@ -22,9 +22,10 @@ void gemm_cpu(const float* A, const float* B, const float* bias, float* out,
         }
     }
 
+    // Apply bias term
     for (int r = 0; r < n; ++r) {
         for (int c = 0; c < k; ++c) {
-            out[r * k + c] += bias[r] * beta;
+            out[r * k + c] += bias[c] * beta;
         }
     }
 }

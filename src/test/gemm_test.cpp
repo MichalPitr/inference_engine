@@ -24,7 +24,7 @@ TEST(GemmTest, NoBias) {
 TEST(GemmTest, MatrixVectorMultiplication) {
     const int n = 2;
     const int m = 2;
-    const int k = 1;  // Must be 1 for this gemm implementation
+    const int k = 1;
 
     float A[n * m] = {1.0, 2.0, 3.0, 4.0};
     float B[m * k] = {5.0, 6.0};

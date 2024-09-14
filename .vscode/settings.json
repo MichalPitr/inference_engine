@@ -72,7 +72,8 @@
         "__nullptr": "cpp",
         "__hash_table": "cpp",
         "__tree": "cpp",
-        "locale": "cpp"
+        "locale": "cpp",
+        "__split_buffer": "cpp"
     },
     "cmake.debugConfig": {
         "args": [

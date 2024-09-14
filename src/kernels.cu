@@ -16,7 +16,7 @@ __global__ void gemm_kernel(const float *A, const float *B, const float *bias,
             float bVal = transB ? B[col * m + i] : B[i * k + col];
             res += aVal * bVal;
         }
-        out[row * k + col] = res * alpha + bias[row] * beta;
+        out[row * k + col] = res * alpha + bias[col] * beta;
     }
 }
 

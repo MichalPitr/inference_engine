@@ -50,8 +50,8 @@ int main(int argc, char** argv) {
 
     std::string file = "/home/michal/code/inference_engine/inputs/image_";
 
-    int loops{20};
-    int inferences{100};
+    int loops{1};
+    int inferences{16};
     int total_inferences{loops * inferences};
     std::vector<Tensor<float>> inputs;
     inputs.reserve(total_inferences);
@@ -64,16 +64,36 @@ int main(int argc, char** argv) {
         }
     }
 
+    std::vector<Tensor<float>> mini_batches;
+    int i = 0;
+    while (i < total_inferences) {
+        std::vector<Tensor<float>> batch;
+        for (int j = 0; j < config.get_batch_size() && i + j < total_inferences;
+             ++j) {
+            batch.push_back(inputs[i + j]);
+        }
+        if (batch.size() > 0) {
+            mini_batches.push_back(Tensor<float>::stack(batch));
+        }
+        i += batch.size();
+    }
+
     std::vector<Tensor<float>> res;
     res.reserve(total_inferences);
     start = std::chrono::high_resolution_clock::now();
-    for (int i = 0; i < total_inferences; ++i) {
-        session.set_input("onnx::Flatten_0", std::move(inputs[i]));
-
+    for (auto batch : mini_batches) {
+        session.set_input("onnx::Flatten_0", std::move(batch));
         session.run();
-
         res.push_back(session.get_output("21"));
     }
+
+    // for (int i = 0; i < total_inferences; ++i) {
+    //     session.set_input("onnx::Flatten_0", std::move(inputs[i]));
+
+    //     session.run();
+
+    //     res.push_back(session.get_output("21"));
+    // }
     end = std::chrono::high_resolution_clock::now();
 
     for (auto v : res) {

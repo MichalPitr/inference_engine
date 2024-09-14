@@ -30,7 +30,10 @@ Tensor<T> CpuOperators<T>::gemm(const Tensor<T>& A, const Tensor<T>& B,
     const T* AData = A.data();
     const T* BData = B.data();
     const T* BiasData = bias.data();
-
+    A.printShape();
+    B.printShape();
+    bias.printShape();
+    std::cout << "\n";
     gemm_cpu(AData, BData, BiasData, out.data(), N, M, K, transA, transB, alpha,
              beta);
 
@@ -171,7 +174,6 @@ Tensor<T> base_flatten(Tensor<T>& tensor, uint64_t axis) {
     for (std::size_t i = axis; i < tensor.shape().size(); ++i) {
         dimAfter *= tensor.shape()[i];
     }
-
     tensor.setShape({dimBefore, dimAfter});
     return tensor;
 }

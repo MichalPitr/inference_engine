@@ -2,6 +2,7 @@
 #define TENSOR_H
 
 #include <cstdint>
+#include <numeric>
 #include <string>
 #include <vector>
 
@@ -55,6 +56,39 @@ class Tensor {
     void printShape() const;
     std::string toString() const;
     void print() const;
+
+    static Tensor stack(const std::vector<Tensor<T>>& tensors) {
+        if (tensors.empty()) {
+            throw std::invalid_argument("Cannot stack empty vector of tensors");
+        }
+
+        // Check if all tensors have the same shape
+        const auto& firstShape = tensors[0].shape();
+        for (size_t i = 1; i < tensors.size(); ++i) {
+            if (tensors[i].shape() != firstShape) {
+                throw std::invalid_argument(
+                    "All tensors must have the same shape");
+            }
+        }
+
+        // Calculate new shape
+        std::vector<size_t> newShape = firstShape;
+        newShape[0] = tensors.size() * firstShape[0];
+
+        // Create new tensor with the calculated shape
+        Tensor<T> result(newShape, tensors[0].allocator_);
+
+        // Copy data from input tensors to the new tensor. Only supports
+        // stacking on CPU.
+        size_t offset = 0;
+        for (const auto& tensor : tensors) {
+            std::memcpy(result.data_ + offset, tensor.data_,
+                        tensor.size_ * sizeof(T));
+            offset += tensor.size_;
+        }
+
+        return result;
+    }
 
    private:
     T* data_;

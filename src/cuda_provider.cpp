@@ -18,6 +18,8 @@ CudaProvider::CudaProvider() : allocator_(std::make_shared<CudaAllocator>()) {}
 
 Tensor<float> CudaProvider::evaluateNode(
     const Node *node, const std::vector<Tensor<float> *> &inputs) {
+    // TODO: find a way to move the input Tensor to device. Then we can skip
+    // this entirely.
     for (auto input : inputs) {
         input->to(DeviceType::CUDA, allocator_);
     }

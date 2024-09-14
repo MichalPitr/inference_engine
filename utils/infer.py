@@ -22,7 +22,7 @@ print("output name:", output_name)
 
 
 # Load and preprocess the MNIST image (now as float32)
-image = load_mnist_image("../inputs/image_0.ubyte")
+image = load_mnist_image("../inputs/image_3.ubyte")
 
 # Run inference
 result = sess.run([output_name], {input_name: image})
@@ -30,6 +30,7 @@ result = sess.run([output_name], {input_name: image})
 # Get predicted class
 predicted_class = np.argmax(result)
 
-print(result)
+with np.printoptions(precision=3, suppress=True):
+    print(result)
 
 print("Predicted class:", predicted_class)
