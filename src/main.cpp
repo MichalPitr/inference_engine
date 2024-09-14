@@ -50,8 +50,9 @@ int main(int argc, char** argv) {
 
     std::string file = "/home/michal/code/inference_engine/inputs/image_";
 
-    int loops{1};
-    int inferences{16};
+    // Preload all inputs into memory
+    int loops{20};
+    int inferences{100};
     int total_inferences{loops * inferences};
     std::vector<Tensor<float>> inputs;
     inputs.reserve(total_inferences);
@@ -64,6 +65,7 @@ int main(int argc, char** argv) {
         }
     }
 
+    // Create mini batches. Batch size is configured via yaml file.
     std::vector<Tensor<float>> mini_batches;
     int i = 0;
     while (i < total_inferences) {
@@ -78,6 +80,7 @@ int main(int argc, char** argv) {
         i += batch.size();
     }
 
+    // Inference
     std::vector<Tensor<float>> res;
     res.reserve(total_inferences);
     start = std::chrono::high_resolution_clock::now();
@@ -86,14 +89,6 @@ int main(int argc, char** argv) {
         session.run();
         res.push_back(session.get_output("21"));
     }
-
-    // for (int i = 0; i < total_inferences; ++i) {
-    //     session.set_input("onnx::Flatten_0", std::move(inputs[i]));
-
-    //     session.run();
-
-    //     res.push_back(session.get_output("21"));
-    // }
     end = std::chrono::high_resolution_clock::now();
 
     for (auto v : res) {
