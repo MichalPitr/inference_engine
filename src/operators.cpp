@@ -30,10 +30,6 @@ Tensor<T> CpuOperators<T>::gemm(const Tensor<T>& A, const Tensor<T>& B,
     const T* AData = A.data();
     const T* BData = B.data();
     const T* BiasData = bias.data();
-    A.printShape();
-    B.printShape();
-    bias.printShape();
-    std::cout << "\n";
     gemm_cpu(AData, BData, BiasData, out.data(), N, M, K, transA, transB, alpha,
              beta);
 

@@ -17,6 +17,7 @@ add_library(engine_lib
     inference_session.cpp
     cpu_provider.cpp
     cuda_provider.cpp
+    cuda_provider_unoptimized.cpp
     ${PROTO_SRCS}
     ${PROTO_HDRS})
 

@@ -53,6 +53,7 @@ DataType ModelConfig::string_to_data_type(const std::string& str) {
 Device ModelConfig::string_to_device(const std::string& str) {
     if (str == "CPU") return Device::CPU;
     if (str == "CUDA") return Device::CUDA;
+    if (str == "CUDA_SLOW") return Device::CUDA_SLOW;
     throw std::runtime_error("Unknown device: " + str);
 }
 

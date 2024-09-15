@@ -15,6 +15,7 @@ enum class DataType {
 enum class Device {
     CPU,
     CUDA,
+    CUDA_SLOW,
 };
 
 struct TensorConfig {

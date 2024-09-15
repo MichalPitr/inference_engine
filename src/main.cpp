@@ -5,6 +5,7 @@
 
 #include "cpu_provider.h"
 #include "cuda_provider.h"
+#include "cuda_provider_unoptimized.h"
 #include "inference_session.h"
 #include "input_loader.h"
 #include "model_config.h"
@@ -32,6 +33,8 @@ int main(int argc, char** argv) {
         provider = std::make_unique<CpuProvider>();
     } else if (device == Device::CUDA) {
         provider = std::make_unique<CudaProvider>();
+    } else if (device == Device::CUDA_SLOW) {
+        provider = std::make_unique<CudaProviderUnoptimized>();
     } else {
         throw std::runtime_error("Unknown device type");
     }
@@ -51,7 +54,7 @@ int main(int argc, char** argv) {
     std::string file = "/home/michal/code/inference_engine/inputs/image_";
 
     // Preload all inputs into memory
-    int loops{20};
+    int loops{100};
     int inferences{100};
     int total_inferences{loops * inferences};
     std::vector<Tensor<float>> inputs;
@@ -103,6 +106,11 @@ int main(int argc, char** argv) {
     std::cout << "Avg inference duration: "
               << duration.count() / total_inferences << " microseconds"
               << std::endl;
+
+    auto duration_s =
+        std::chrono::duration_cast<std::chrono::milliseconds>(duration);
+    std::cout << "througput = " << 1000 * total_inferences / duration_s.count()
+              << "\n";
 
     return 0;
 }
