@@ -11,8 +11,8 @@
 
 class CudaAllocator : public Allocator {
    public:
-    CudaAllocator(size_t pool_size = 200 * 1024 * 1024) {}
-    // : pool_(std::make_unique<CudaMemoryPool>(pool_size)) {}
+    CudaAllocator(size_t pool_size = 200 * 1024 * 1024)
+        : pool_(std::make_unique<CudaMemoryPool>(pool_size)) {}
 
     void* allocate(size_t size) override {
         if (pool_) {
