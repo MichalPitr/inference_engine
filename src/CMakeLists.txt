@@ -2,6 +2,9 @@
 # Generate the .h and .cxx files
 PROTOBUF_GENERATE_CPP(PROTO_SRCS PROTO_HDRS onnx-ml.proto)
 
+# Force shared library
+set(BUILD_SHARED_LIBS ON)
+
 # Add an executable
 add_library(engine_lib
     gemm_cpu.cpp
