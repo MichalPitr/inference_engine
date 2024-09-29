@@ -88,9 +88,9 @@ int main(int argc, char** argv) {
     res.reserve(total_inferences);
     start = std::chrono::high_resolution_clock::now();
     for (auto batch : mini_batches) {
-        session.set_input("onnx::Flatten_0", std::move(batch));
+        session.set_input(config.get_inputs()[0].name, std::move(batch));
         session.run();
-        res.push_back(session.get_output("21"));
+        res.push_back(session.get_output(config.get_outputs()[0].name));
     }
     end = std::chrono::high_resolution_clock::now();
 
