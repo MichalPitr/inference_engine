@@ -19,8 +19,8 @@ CMake will complain if you are missing some system dependencies: protobuf, gtest
 
 ## Backlog:
 
-* Optimize Cuda Provider.
-* Implement batching.
+* Optimize Cuda kernels.
+* Add dynamic batching in Go server.
 * Add graph optimizations.
 
 ## Contributing
