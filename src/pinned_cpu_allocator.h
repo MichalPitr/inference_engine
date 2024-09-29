@@ -89,7 +89,7 @@ class PinnedMemoryPool {
 
 class PinnedCpuAllocator : public Allocator {
    public:
-    PinnedCpuAllocator(size_t pool_size = 10 * 1024 * 1024)  // 10 MiB
+    PinnedCpuAllocator(size_t pool_size = 100 * 1024 * 1024)  // 100 MiB
         : pool_(std::make_unique<PinnedMemoryPool>(pool_size)) {}
 
     void* allocate(size_t size) override {

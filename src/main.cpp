@@ -54,7 +54,7 @@ int main(int argc, char** argv) {
     std::string file = "/home/michal/code/inference_engine/inputs/image_";
 
     // Preload all inputs into memory
-    int loops{100};
+    int loops{1000};
     int inferences{100};
     int total_inferences{loops * inferences};
     std::vector<Tensor<float>> inputs;
@@ -109,7 +109,7 @@ int main(int argc, char** argv) {
 
     auto duration_s =
         std::chrono::duration_cast<std::chrono::milliseconds>(duration);
-    std::cout << "througput = " << 1000 * total_inferences / duration_s.count()
+    std::cout << "throughput = " << 1000 * total_inferences / duration_s.count()
               << "\n";
 
     return 0;

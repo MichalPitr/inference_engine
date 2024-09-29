@@ -97,7 +97,8 @@ void Tensor<T>::allocateAndCopy(const T* src) {
         }
 #ifdef USE_CUDA
         else if (allocator_->getDeviceType() == DeviceType::CUDA) {
-            cudaMemcpy(data_, src, size_ * sizeof(T), cudaMemcpyHostToDevice);
+            cudaMemcpyAsync(data_, src, size_ * sizeof(T),
+                            cudaMemcpyHostToDevice);
         }
 #endif
         else {
