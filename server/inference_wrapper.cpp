@@ -39,6 +39,18 @@ InferenceSessionWrapper* create_session(const char* config_path) {
     return wrapper;
 }
 
+uint64_t input_size(InferenceSessionWrapper* wrapper) {
+    auto shape = wrapper->config.get_inputs()[0].shape;
+    return std::accumulate(shape.begin(), shape.end(), 1ULL,
+                           std::multiplies<size_t>());
+}
+
+uint64_t output_size(InferenceSessionWrapper* wrapper) {
+    auto shape = wrapper->config.get_outputs()[0].shape;
+    return std::accumulate(shape.begin(), shape.end(), 1ULL,
+                           std::multiplies<size_t>());
+}
+
 void destroy_session(InferenceSessionWrapper* wrapper) { delete wrapper; }
 
 int initialize_provider(InferenceSessionWrapper* wrapper) {

@@ -16,7 +16,11 @@ typedef struct {
 
 InferenceSessionWrapper* create_session(const char* config_path);
 void destroy_session(InferenceSessionWrapper* session);
+
+uint64_t input_size(InferenceSessionWrapper* session);
+uint64_t output_size(InferenceSessionWrapper* session);
 int initialize_provider(InferenceSessionWrapper* session);
+
 InferenceResult run_inference(InferenceSessionWrapper* session,
                               float* input_data, uint64_t input_size);
 void free_result(InferenceResult result);

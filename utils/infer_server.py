@@ -35,10 +35,11 @@ if __name__ == "__main__":
     # List all files in the inputs folder
     files = os.listdir(inputs_folder)
     
-    for file in sorted(files):
-        full_path = os.path.join(inputs_folder, file)
-        print(f"Processing file: {file}")
-        process_image(full_path, url)
-        print("------------------------")
+    for file in sorted(files)[:1]:
+        for i in range(10):
+            full_path = os.path.join(inputs_folder, file)
+            print(f"Processing file: {file}")
+            process_image(full_path, url)
+            print("------------------------")
 
     print("All images processed.")

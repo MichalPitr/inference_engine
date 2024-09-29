@@ -75,7 +75,7 @@ func inferenceHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if len(req.Data) == 0 {
+	if len(req.Data) != int(C.input_size(session)) {
 		http.Error(w, "Input data is empty", http.StatusBadRequest)
 		return
 	}

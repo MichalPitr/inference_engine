@@ -1,7 +1,7 @@
 model_path: /home/michal/code/inference_engine/models/mnist_ffn_complex.onnx
 model_format: onnx
 execution_provider: CUDA
-batch_size: 128
+batch_size: 1
 inputs:
   - name: "onnx::Flatten_0"
     shape: [1, 1, 28, 28]
