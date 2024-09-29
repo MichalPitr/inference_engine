@@ -6,22 +6,31 @@ I am developing this project to learn C++ and get hands-on experience with infer
 
 1. clone the project: `git clone git@github.com:MichalPitr/inference_engine.git`
 2. `cd inference_engine`
-3. `mkdir build`
-4. `cd build`
-5. `cmake ..`
-6. `make .`
+3. `sh build.sh`
 
 CMake will complain if you are missing some system dependencies: protobuf, gtest, google benchmark, yaml-cpp
 
-## Run inference with a sample image
+## How to run simple example
 
-`/${project_root}/build/src/engine_exe ${project_root}/model_repository/mnist.yaml ${project_root}/inputs/image_0.ubyte`
+This starts up an http server and uses python to send requests. You can also do the equivalent with curl via command line.
+
+1. Build like explained above.
+2. `cd server`
+3. `go run main.go`
+4. Open another terminal
+5. `cd utils`
+6. `source venv/bin/activate`
+7. `python infer_server.py`
 
 ## Backlog:
 
-* Optimize Cuda kernels.
-* Add dynamic batching in Go server.
+* Optimize Cuda kernels. Gemm is very naive at the moment.
+* Add dynamic batching to Go server.
 * Add graph optimizations.
+* Add input validations to Go server.
+* Optimize memory allocator usage - should check available memory during loading, total memory usage can be pretty accurately estimated.
+* Improve error handling.
+* Explore NVTX profiling.
 
 ## Contributing
 
