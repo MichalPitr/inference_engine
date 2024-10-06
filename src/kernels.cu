@@ -20,9 +20,70 @@ __global__ void gemm_kernel(const float *A, const float *B, const float *bias,
     }
 }
 
+#define TILE_SIZE 16
+
+__global__ void gemm_kernel_tiled(const float *A, const float *B,
+                                  const float *bias, float *out, int n, int m,
+                                  int k, bool transA, bool transB, float alpha,
+                                  float beta) {
+    __shared__ float As[TILE_SIZE][TILE_SIZE];
+    __shared__ float Bs[TILE_SIZE][TILE_SIZE];
+
+    int bx = blockIdx.x;
+    int by = blockIdx.y;
+    int tx = threadIdx.x;
+    int ty = threadIdx.y;
+
+    int row = by * TILE_SIZE + ty;
+    int col = bx * TILE_SIZE + tx;
+
+    float res = 0.0f;
+
+    for (int t = 0; t < (m + TILE_SIZE - 1) / TILE_SIZE; ++t) {
+        // Collaboratively load tile
+        if (row < n && t * TILE_SIZE + tx < m) {
+            As[ty][tx] = transA ? A[(t * TILE_SIZE + tx) * n + row]
+                                : A[row * m + (t * TILE_SIZE + tx)];
+        } else {
+            As[ty][tx] = 0.0f;
+        }
+
+        if (t * TILE_SIZE + ty < m && col < k) {
+            Bs[ty][tx] = transB ? B[col * m + (t * TILE_SIZE + ty)]
+                                : B[(t * TILE_SIZE + ty) * k + col];
+        } else {
+            Bs[ty][tx] = 0.0f;
+        }
+
+        __syncthreads();
+
+        // Matmul over tile
+        for (int i = 0; i < TILE_SIZE; ++i) {
+            res += As[ty][i] * Bs[i][tx];
+        }
+
+        __syncthreads();
+    }
+
+    if (row < n && col < k) {
+        out[row * k + col] = res * alpha + bias[col] * beta;
+    }
+}
+
 void gemm_cuda(const float *A, const float *B, const float *bias, float *out,
                int n, int m, int k, bool transA, bool transB, float alpha,
                float beta) {
+    dim3 blockDim(TILE_SIZE, TILE_SIZE);
+    dim3 gridDim((k + TILE_SIZE - 1) / TILE_SIZE,
+                 (n + TILE_SIZE - 1) / TILE_SIZE);
+
+    gemm_kernel_tiled<<<gridDim, blockDim>>>(A, B, bias, out, n, m, k, transA,
+                                             transB, alpha, beta);
+}
+
+void gemm_cuda_naive(const float *A, const float *B, const float *bias,
+                     float *out, int n, int m, int k, bool transA, bool transB,
+                     float alpha, float beta) {
     dim3 blockSize(16, 16);
     dim3 gridSize((k + blockSize.x - 1) / blockSize.x,
                   (n + blockSize.y - 1) / blockSize.y);

@@ -6,3 +6,4 @@ models/resnet10.onnx
 utils/venv
 perf.data*
 server/server
+profiles/*

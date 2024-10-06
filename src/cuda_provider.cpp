@@ -69,8 +69,8 @@ Tensor<float> CudaProvider::gemm(const Node *node,
     const float *BData = B.data();
     const float *BiasData = bias.data();
 
-    gemm_cuda(AData, BData, BiasData, out.data(), N, M, K, transA, transB,
-              alpha, beta);
+    gemm_cuda_naive(AData, BData, BiasData, out.data(), N, M, K, transA, transB,
+                    alpha, beta);
 
     return out;
 }

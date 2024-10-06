@@ -11,9 +11,8 @@
 #include "model_config.h"
 
 int main(int argc, char** argv) {
-    if (argc != 3) {
-        std::cerr << "Usage: " << argv[0] << " <config.yaml> <input.ubyte>"
-                  << std::endl;
+    if (argc != 2) {
+        std::cerr << "Usage: " << argv[0] << " <config.yaml>" << std::endl;
         return 1;
     }
 
@@ -54,8 +53,8 @@ int main(int argc, char** argv) {
     std::string file = "/home/michal/code/inference_engine/inputs/image_";
 
     // Preload all inputs into memory
-    int loops{10000};
-    int inferences{1};
+    int loops{1};
+    int inferences{100};
     int total_inferences{loops * inferences};
     std::vector<Tensor<float>> inputs;
     inputs.reserve(total_inferences);
