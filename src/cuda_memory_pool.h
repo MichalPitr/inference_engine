@@ -11,77 +11,92 @@
 #include <vector>
 
 class CudaMemoryPool {
+   private:
+    void* pool_start;
+    size_t pool_size;
+    struct Block {
+        size_t offset;
+        size_t size;
+        bool is_free;
+        Block(size_t off, size_t sz, bool free)
+            : offset(off), size(sz), is_free(free) {}
+    };
+    std::vector<Block> blocks;
+
    public:
-    CudaMemoryPool(size_t size) : total_size_(size) {
-        cudaMalloc(&pool_, total_size_);
-        free_blocks_.push_back({0, total_size_});
+    CudaMemoryPool(size_t size) : pool_size(size) {
+        cudaError_t err = cudaMalloc(&pool_start, size);
+        if (err != cudaSuccess) {
+            throw std::runtime_error("Failed to allocate CUDA memory pool");
+        }
+        blocks.emplace_back(0, size, true);
     }
 
-    ~CudaMemoryPool() { cudaFree(pool_); }
+    ~CudaMemoryPool() { cudaFree(pool_start); }
 
     void* allocate(size_t size) {
-        auto it = std::find_if(
-            free_blocks_.begin(), free_blocks_.end(),
-            [size](const auto& block) { return block.second >= size; });
+        auto best_fit = blocks.end();
+        size_t smallest_fit = pool_size + 1;
 
-        if (it == free_blocks_.end()) {
-            throw std::runtime_error("Memory pool exhausted");
+        for (auto it = blocks.begin(); it != blocks.end(); ++it) {
+            if (it->is_free && it->size >= size) {
+                if (it->size < smallest_fit) {
+                    best_fit = it;
+                    smallest_fit = it->size;
+                }
+            }
         }
 
-        size_t offset = it->first;
-        size_t block_size = it->second;
-
-        if (block_size > size) {
-            // Split the block
-            it->first += size;
-            it->second -= size;
-        } else {
-            // Use the entire block
-            free_blocks_.erase(it);
+        if (best_fit == blocks.end()) {
+            throw std::runtime_error("Out of memory in CUDA pool");
         }
 
-        return static_cast<char*>(pool_) + offset;
+        size_t alloc_offset = best_fit->offset;
+        size_t remaining_size = best_fit->size - size;
+
+        best_fit->is_free = false;
+        best_fit->size = size;
+
+        if (remaining_size > 0) {
+            blocks.insert(best_fit + 1,
+                          Block(alloc_offset + size, remaining_size, true));
+        }
+
+        return static_cast<char*>(pool_start) + alloc_offset;
     }
 
     void deallocate(void* ptr) {
-        size_t offset = static_cast<char*>(ptr) - static_cast<char*>(pool_);
+        size_t offset =
+            static_cast<char*>(ptr) - static_cast<char*>(pool_start);
+        auto it = std::find_if(
+            blocks.begin(), blocks.end(),
+            [offset](const Block& b) { return b.offset == offset; });
 
-        auto it = std::lower_bound(
-            free_blocks_.begin(), free_blocks_.end(), offset,
-            [](const auto& block, size_t off) { return block.first < off; });
+        if (it == blocks.end()) {
+            throw std::runtime_error("Invalid pointer for deallocation");
+        }
 
-        size_t size = (it != free_blocks_.end()) ? it->first - offset
-                                                 : total_size_ - offset;
+        it->is_free = true;
 
-        if (it != free_blocks_.begin() &&
-            (it - 1)->first + (it - 1)->second == offset) {
-            // Merge with previous block
+        // Coalesce with previous block if free
+        if (it != blocks.begin()) {
             auto prev = it - 1;
-            prev->second += size;
-            if (it != free_blocks_.end() && offset + size == it->first) {
-                // Merge with next block too
-                prev->second += it->second;
-                free_blocks_.erase(it);
+            if (prev->is_free) {
+                prev->size += it->size;
+                blocks.erase(it);
+                it = prev;
             }
-        } else if (it != free_blocks_.end() && offset + size == it->first) {
-            // Merge with next block
-            it->first = offset;
-            it->second += size;
-        } else {
-            // Insert new block
-            free_blocks_.insert(it, {offset, size});
+        }
+
+        // Coalesce with next block if free
+        if (it != blocks.end() - 1) {
+            auto next = it + 1;
+            if (next->is_free) {
+                it->size += next->size;
+                blocks.erase(next);
+            }
         }
     }
-
-    void reset() {
-        free_blocks_.clear();
-        free_blocks_.push_back({0, total_size_});
-    }
-
-   private:
-    void* pool_;
-    size_t total_size_;
-    std::vector<std::pair<size_t, size_t>> free_blocks_;  // offset, size
 };
 
 #endif

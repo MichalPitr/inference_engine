@@ -54,7 +54,7 @@ int main(int argc, char** argv) {
     std::string file = "/home/michal/code/inference_engine/inputs/image_";
 
     // Preload all inputs into memory
-    int loops{50};
+    int loops{10000};
     int inferences{1};
     int total_inferences{loops * inferences};
     std::vector<Tensor<float>> inputs;
