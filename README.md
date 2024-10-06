@@ -42,3 +42,5 @@ I enjoy writing technical blog posts and I've written some about this project:
 
 * [Initial design](https://michalpitr.substack.com/p/build-your-own-inference-engine-from)
 * [Profiling-driven optimizations](https://michalpitr.substack.com/p/inference-engine-optimizing-performance)
+* [Adding CUDA execution provider](https://michalpitr.substack.com/p/inference-engine-accelerating-with)
+
