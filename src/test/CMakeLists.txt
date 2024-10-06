@@ -8,5 +8,18 @@ foreach(test_name gemm tensor node operators)
 endforeach()
 
 # Benchmakrs
-add_executable(infer_bench infer_bench.cpp)
-target_link_libraries(infer_bench PRIVATE engine_lib benchmark::benchmark)
+
+# GEMM Benchmark
+add_executable(gemm_bench gemm_bench.cpp)
+target_link_libraries(gemm_bench 
+    PRIVATE 
+    engine_lib 
+    benchmark::benchmark 
+    ${CUDA_LIBRARIES}
+)
+target_include_directories(gemm_bench PRIVATE ${CUDA_INCLUDE_DIRS})
+
+# Set CUDA properties for gemm_bench
+set_target_properties(gemm_bench PROPERTIES 
+    CUDA_SEPARABLE_COMPILATION ON
+)

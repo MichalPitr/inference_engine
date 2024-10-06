@@ -1,9 +1,9 @@
 #ifndef KERNELS_H
 #define KERNELS_H
 
-void gemm_cuda(const float* A, const float* B, const float* bias, float* out,
-               int n, int m, int k, bool transA, bool transB, float alpha,
-               float beta);
+void gemm_cuda_tiled(const float* A, const float* B, const float* bias,
+                     float* out, int n, int m, int k, bool transA, bool transB,
+                     float alpha, float beta);
 
 void gemm_cuda_naive(const float* A, const float* B, const float* bias,
                      float* out, int n, int m, int k, bool transA, bool transB,

@@ -53,8 +53,8 @@ int main(int argc, char** argv) {
     std::string file = "/home/michal/code/inference_engine/inputs/image_";
 
     // Preload all inputs into memory
-    int loops{1};
-    int inferences{100};
+    int loops{100};
+    int inferences{1};
     int total_inferences{loops * inferences};
     std::vector<Tensor<float>> inputs;
     inputs.reserve(total_inferences);

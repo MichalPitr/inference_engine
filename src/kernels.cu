@@ -2,11 +2,21 @@
 
 #include <iostream>
 
-__global__ void gemm_kernel(const float *A, const float *B, const float *bias,
-                            float *out, int n, int m, int k, bool transA,
-                            bool transB, float alpha, float beta) {
-    int row = blockIdx.y * blockDim.y + threadIdx.y;
-    int col = blockIdx.x * blockDim.x + threadIdx.x;
+#define BLOCK_SIZE 16
+#define TILE_SIZE 16
+
+/*
+Tensors are of shape:
+A: (n, m)
+B: (m, k)
+C: (n, k)
+*/
+__global__ void gemm_kernel_naive(const float *A, const float *B,
+                                  const float *bias, float *out, int n, int m,
+                                  int k, bool transA, bool transB, float alpha,
+                                  float beta) {
+    const uint col = blockIdx.x * blockDim.x + threadIdx.x;
+    const uint row = blockIdx.y * blockDim.y + threadIdx.y;
 
     if (row < n && col < k) {
         float res = 0.0f;
@@ -20,8 +30,6 @@ __global__ void gemm_kernel(const float *A, const float *B, const float *bias,
     }
 }
 
-#define TILE_SIZE 16
-
 __global__ void gemm_kernel_tiled(const float *A, const float *B,
                                   const float *bias, float *out, int n, int m,
                                   int k, bool transA, bool transB, float alpha,
@@ -29,10 +37,10 @@ __global__ void gemm_kernel_tiled(const float *A, const float *B,
     __shared__ float As[TILE_SIZE][TILE_SIZE];
     __shared__ float Bs[TILE_SIZE][TILE_SIZE];
 
-    int bx = blockIdx.x;
-    int by = blockIdx.y;
-    int tx = threadIdx.x;
-    int ty = threadIdx.y;
+    uint bx = blockIdx.x;
+    uint by = blockIdx.y;
+    uint tx = threadIdx.x;
+    uint ty = threadIdx.y;
 
     int row = by * TILE_SIZE + ty;
     int col = bx * TILE_SIZE + tx;
@@ -70,9 +78,9 @@ __global__ void gemm_kernel_tiled(const float *A, const float *B,
     }
 }
 
-void gemm_cuda(const float *A, const float *B, const float *bias, float *out,
-               int n, int m, int k, bool transA, bool transB, float alpha,
-               float beta) {
+void gemm_cuda_tiled(const float *A, const float *B, const float *bias,
+                     float *out, int n, int m, int k, bool transA, bool transB,
+                     float alpha, float beta) {
     dim3 blockDim(TILE_SIZE, TILE_SIZE);
     dim3 gridDim((k + TILE_SIZE - 1) / TILE_SIZE,
                  (n + TILE_SIZE - 1) / TILE_SIZE);
@@ -84,12 +92,12 @@ void gemm_cuda(const float *A, const float *B, const float *bias, float *out,
 void gemm_cuda_naive(const float *A, const float *B, const float *bias,
                      float *out, int n, int m, int k, bool transA, bool transB,
                      float alpha, float beta) {
-    dim3 blockSize(16, 16);
-    dim3 gridSize((k + blockSize.x - 1) / blockSize.x,
-                  (n + blockSize.y - 1) / blockSize.y);
+    dim3 blockDim(BLOCK_SIZE, BLOCK_SIZE, 1);
+    dim3 gridDim((k + blockDim.x - 1) / blockDim.x,
+                 (n + blockDim.y - 1) / blockDim.y);
 
-    gemm_kernel<<<gridSize, blockSize>>>(A, B, bias, out, n, m, k, transA,
-                                         transB, alpha, beta);
+    gemm_kernel_naive<<<gridDim, blockDim>>>(A, B, bias, out, n, m, k, transA,
+                                             transB, alpha, beta);
 }
 
 void gemm_cuda_unoptimized(const float *A, const float *B, const float *bias,
@@ -106,12 +114,12 @@ void gemm_cuda_unoptimized(const float *A, const float *B, const float *bias,
     cudaMemcpy(d_B, B, m * k * sizeof(float), cudaMemcpyHostToDevice);
     cudaMemcpy(d_bias, bias, n * sizeof(float), cudaMemcpyHostToDevice);
 
-    dim3 blockSize(16, 16);
+    dim3 blockSize(BLOCK_SIZE, BLOCK_SIZE);
     dim3 gridSize((k + blockSize.x - 1) / blockSize.x,
                   (n + blockSize.y - 1) / blockSize.y);
 
-    gemm_kernel<<<gridSize, blockSize>>>(d_A, d_B, d_bias, d_out, n, m, k,
-                                         transA, transB, alpha, beta);
+    gemm_kernel_naive<<<gridSize, blockSize>>>(d_A, d_B, d_bias, d_out, n, m, k,
+                                               transA, transB, alpha, beta);
 
     cudaMemcpy(out, d_out, n * k * sizeof(float), cudaMemcpyDeviceToHost);
 
