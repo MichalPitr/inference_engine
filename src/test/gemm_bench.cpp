@@ -18,7 +18,7 @@ static void BM_GEMM(benchmark::State& state) {
     const int n = state.range(0);
     const int m = state.range(1);
     const int k = state.range(2);
-    const bool is_tiled = state.range(3);
+    const int type = state.range(3);
 
     // Allocate and initialize host matrices
     std::vector<float> h_A(n * m), h_B(m * k), h_bias(k), h_out(n * k);
@@ -48,13 +48,18 @@ static void BM_GEMM(benchmark::State& state) {
 
         // Record the start event
         cudaEventRecord(start, nullptr);
-
-        if (is_tiled) {
-            gemm_cuda_tiled(d_A, d_B, d_bias, d_out, n, m, k, false, false,
-                            1.0f, 1.0f);
-        } else {
+        if (type == 0) {
             gemm_cuda_naive(d_A, d_B, d_bias, d_out, n, m, k, false, false,
                             1.0f, 1.0f);
+        } else if (type == 1) {
+            gemm_cuda_tiled(d_A, d_B, d_bias, d_out, n, m, k, false, false,
+                            1.0f, 1.0f);
+        } else if (type == 2) {
+            gemm_cuda_tiled_1D(d_A, d_B, d_bias, d_out, n, m, k, false, false,
+                               1.0f, 1.0f);
+        } else if (type == 3) {
+            gemm_tiled_1D_blocktiling(d_A, d_B, d_bias, d_out, n, m, k, false,
+                                      false, 1.0f, 1.0f);
         }
 
         // Record the stop event
@@ -87,8 +92,10 @@ static void BM_GEMM(benchmark::State& state) {
 
 // Define the benchmark
 BENCHMARK(BM_GEMM)
-    ->Args({4092, 4092, 4092, 0})  // n, m, k, (0 for naive)
-    ->Args({4092, 4092, 4092, 1})  // n, m, k, (1 for tiled)
+    // ->Args({4092, 4092, 4092, 0})  // n, m, k, (0 for naive)
+    // ->Args({4092, 4092, 4092, 1})  // n, m, k, (1 for tiled)
+    // ->Args({4092, 4092, 4092, 2})  // n, m, k, (2 for tiled_1D)
+    ->Args({4092, 4092, 4092, 3})  // n, m, k, (3 for 1D block tiling)
     ->Unit(benchmark::kMillisecond)
     ->UseManualTime();
 

@@ -73,11 +73,12 @@
         "__hash_table": "cpp",
         "__tree": "cpp",
         "locale": "cpp",
-        "__split_buffer": "cpp"
+        "__split_buffer": "cpp",
+        "__locale": "cpp"
     },
     "cmake.debugConfig": {
         "args": [
-            "/home/michal/code/inference_engine/model_repository/mnist.yaml",
+            // "/home/michal/code/inference_engine/model_repository/mnist.yaml",
         ]
     },
     "C_Cpp.default.compilerPath": "/usr/bin/clang++",
