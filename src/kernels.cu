@@ -167,7 +167,7 @@ __global__ void gemm_kernel_tiled_1D(const float *A, const float *B,
 */
 template <const int BN, const int BM, const int BK, const int TM>
 __global__ void gemm_kernel_tiled_1D_blocktiling(const float *A, const float *B,
-                                                 const float *bias, float *out,
+                                                 const float *bias, float *C,
                                                  int N, int M, int K,
                                                  bool transA, bool transB,
                                                  float alpha, float beta) {
@@ -178,75 +178,162 @@ __global__ void gemm_kernel_tiled_1D_blocktiling(const float *A, const float *B,
     uint bx = blockIdx.x;  // (0 - K div BK)
     uint by = blockIdx.y;  // (0 - N div BN)
 
-    // thread x y coordinates. Coordinates within shared memory block.
-    uint tx = threadIdx.x % BK;  // (0 - 63)
-    uint ty = threadIdx.x / BK;  // (0 - 7)
+    // Thread for
+    const uint threadCol = threadIdx.x % BK;  // range: 0-64
+    const uint threadRow = threadIdx.x / BK;  // range: 0-8
 
+    assert(BN * BM == blockDim.x);
+    assert(BM * BK == blockDim.x);
+    const uint innerColA = threadIdx.x % BM;  // range: 0 - 8
+    const uint innerRowA = threadIdx.x / BM;  // range: 0 - 64
+    const uint innerColB = threadIdx.x % BK;  // range: 0 - 64
+    const uint innerRowB = threadIdx.x / BK;  // range: 0 - 8
+
+    // Each thread block processes one block row of A and block column of B.
+    // This means we need to correctly account for offsets depending on in which
+    // thread block this kernel is.
+
+    // This says how many rows * width of A to skip.
+    // by * BN gives the size of the block tile and M is the row width.
+    const uint A_baseoffset = by * BN * M;
+
+    // This says how many columns * height of B to sip.
+    // bx * BK gives the number of columns to skip. Using this offset, whenever
+    // we index into a row, we'll automatically skip the first offset columns.
+    const uint B_baseoffset = bx * BK;
+
+    // Similarly, we need offset into C.
+    // We skip rows similarly like for A and then add offset for proper columns
+    // similarly like in B.
+    const uint C_baseoffset = by * BN * K + bx * BK;
+
+    // Each thread calculates TM results.
     float threadResults[TM] = {0.0};
-    // printf("expected num of iterations = %d\n", CEIL_DIV(M, BM));
-    for (uint blkIdx = 0; blkIdx < CEIL_DIV(M, BM); ++blkIdx) {
-        // printf("BlockIndex = %d\n", blkIdx);
-        // Collaboratively load tile
-        int A_row = (by * BM + tx);
-        int A_col = blkIdx * BM + ty;
-        int A_idx = A_row * M + A_col;
-        // printf("row=%d, col=%d, A_idx=%d\n", A_row, A_col, A_idx);
-        if (A_row < N && A_col < M) {
-            // printf(
-            //     "Storing A[%d] in As[%d][%d], bx=%d, by=%d, tx=%d, ty=%d, "
-            //     "blkIdx=%d, M=%d, N=%d, K=%d, BM=%d, BN=%d, BK=%d, TM=%d\n",
-            // A_idx, tx, ty, bx, by, tx, ty, blkIdx, M, N, K, BM, BN, BK, TM);
-            // FIXME: implement transpose.
-            As[tx][ty] = transA ? A[A_idx] : A[A_idx];
+
+    // Outer loop over block tiles. Block tile in A is of shape (BN, BM) and
+    // block tile in B is of shape (BM, BK). Supposing A and B are both
+    // (128, 128), and (BN=64, BM=8), (BM=8, BK=64). Each thread block will
+    // calculate a 64x64 block of C. This is done by sliding a (64x8)
+    // blocktile across A and B in lock-step. Partial results are
+    // accummulated and once fully slided, written to C.
+    for (uint blockTileOffset = 0; blockTileOffset < M; blockTileOffset += BM) {
+        const bool validRowA = (by * BN + innerRowA) < N;
+        const bool validColA = (blockTileOffset + innerColA) < M;
+        const uint A_idx =
+            A_baseoffset + blockTileOffset + innerRowA * M + innerColA;
+        printf(
+            "A_idx=%d, A_baseoffset=%d, blockTileOffset=%d, innerRowA=%d, "
+            "M=%d, innerColA=%d\n",
+            A_idx, A_baseoffset, blockTileOffset, innerRowA, M, innerColA);
+        if (validRowA && validColA && A_idx < N * M) {
+            As[innerRowA][innerColA] = A[A_idx];
         } else {
-            // Out of bounds defaults to 0.
-            As[tx][ty] = 0.0f;
+            As[innerRowA][innerColA] = 0;
         }
 
-        int B_col = (bx * BK + tx);
-        int B_row = (blkIdx * BM + ty);
-        int B_idx = B_row * K + B_col;
-        // printf("row=%d, col=%d, B_idx=%d\n", B_row, B_col, B_idx);
-        if (B_row < M && B_col < K) {
-            Bs[ty][tx] = transB ? B[B_idx] : B[B_idx];
+        const bool validRowB = (blockTileOffset + innerRowB) < M;
+        const bool validColB = (bx * BK + innerColB) < K;
+        const uint B_idx =
+            B_baseoffset + blockTileOffset * K + innerColB + innerRowB * K;
+        if (validRowB && validColB && B_idx < M * K) {
+            Bs[innerRowB][innerColB] = B[B_idx];
         } else {
-            // Out of bounds defaults to 0.
-            Bs[ty][tx] = 0.0f;
+            Bs[innerRowB][innerColB] = 0;
         }
 
         __syncthreads();
-
-        // FIXME: Likely bug in this multiplication.
-        // Dot product for multiple outputs.
-        // We have a [64, 8] and [8, 64] matrix As and Bs. Each (512) thread
-        // computes 8 results. This means that each thread computes
+        // Calculate per-thread results. Each thread calculates TM dot products.
+        // This is done by taking TM rows of As and multiplying them with a
+        // single column of Bs.
         for (uint resIdx = 0; resIdx < TM; ++resIdx) {
             for (uint dotIdx = 0; dotIdx < BM; ++dotIdx) {
-                // printf("resIdx=%d, dotIdx=%d, tx=%d, ty=%d\n", resIdx,
-                // dotIdx,
-                //        tx, ty);
-
-                // As[(ty * TM + resIdx) * BK + dotIdx] * Bs[dotIdx * BN
-                // + tx];
                 threadResults[resIdx] +=
-                    As[ty * TM + resIdx][dotIdx] * Bs[dotIdx][tx];
+                    As[threadRow * TM + resIdx][dotIdx] * Bs[dotIdx][threadCol];
             }
         }
         __syncthreads();
     }
 
-    //     C[(threadRow * TM + resIdx) * N + threadCol] =
-    //         alpha * threadResults[resIdx] +
-    //         beta * C[(threadRow * TM + resIdx) * N + threadCol];
+    // write out the results
     for (uint resIdx = 0; resIdx < TM; ++resIdx) {
-        uint row = ty * TM + resIdx;
-        uint col = tx;
-        if (row < N && col < K) {
-            out[(row * K) + col] =
-                threadResults[resIdx] * alpha + bias[col] * beta;
+        const uint rowC = by * BN + threadRow * TM + resIdx;
+        const uint colC = bx * BK + threadCol;
+
+        if (rowC < N && colC < K) {
+            C[rowC * K + colC] =
+                alpha * threadResults[resIdx] + beta * bias[colC];
         }
     }
-    // printf("Done.\n");
+}
+
+template <const int BM, const int BN, const int BK, const int TM>
+__global__ void sgemm1DBlocktiling(int M, int N, int K, float alpha,
+                                   const float *A, const float *B, float beta,
+                                   float *C) {
+    // If we flip x and y here we get ~30% less performance for large matrices.
+    // The current, 30% faster configuration ensures that blocks with sequential
+    // blockIDs access columns of B sequentially, while sharing the same row of
+    // A. The slower configuration would share columns of A, but access into B
+    // would be non-sequential. So the faster configuration has better spatial
+    // locality and hence a greater L2 hit rate.
+    const uint cRow = blockIdx.y;
+    const uint cCol = blockIdx.x;
+
+    // each warp will calculate 32*TM elements, with 32 being the columnar dim.
+    const int threadCol = threadIdx.x % BN;
+    const int threadRow = threadIdx.x / BN;
+
+    // allocate space for the current blocktile in SMEM
+    __shared__ float As[BM * BK];
+    __shared__ float Bs[BK * BN];
+
+    // Move blocktile to beginning of A's row and B's column
+    A += cRow * BM * K;
+    B += cCol * BN;
+    C += cRow * BM * N + cCol * BN;
+
+    // todo: adjust this to each thread to load multiple entries and
+    // better exploit the cache sizes
+    assert(BM * BK == blockDim.x);
+    assert(BN * BK == blockDim.x);
+    const uint innerColA = threadIdx.x % BK;  // warp-level GMEM coalescing
+    const uint innerRowA = threadIdx.x / BK;
+    const uint innerColB = threadIdx.x % BN;  // warp-level GMEM coalescing
+    const uint innerRowB = threadIdx.x / BN;
+
+    // allocate thread-local cache for results in registerfile
+    float threadResults[TM] = {0.0};
+
+    // outer loop over block tiles
+    for (uint bkIdx = 0; bkIdx < K; bkIdx += BK) {
+        // populate the SMEM caches
+        As[innerRowA * BK + innerColA] = A[innerRowA * K + innerColA];
+        Bs[innerRowB * BN + innerColB] = B[innerRowB * N + innerColB];
+        __syncthreads();
+
+        // advance blocktile
+        A += BK;
+        B += BK * N;
+
+        // calculate per-thread results
+        for (uint dotIdx = 0; dotIdx < BK; ++dotIdx) {
+            // we make the dotproduct loop the outside loop, which facilitates
+            // reuse of the Bs entry, which we can cache in a tmp var.
+            float tmpB = Bs[dotIdx * BN + threadCol];
+            for (uint resIdx = 0; resIdx < TM; ++resIdx) {
+                threadResults[resIdx] +=
+                    As[(threadRow * TM + resIdx) * BK + dotIdx] * tmpB;
+            }
+        }
+        __syncthreads();
+    }
+
+    // write out the results
+    for (uint resIdx = 0; resIdx < TM; ++resIdx) {
+        C[(threadRow * TM + resIdx) * N + threadCol] =
+            alpha * threadResults[resIdx] +
+            beta * C[(threadRow * TM + resIdx) * N + threadCol];
+    }
 }
 
 void gemm_cuda_tiled(const float *A, const float *B, const float *bias,

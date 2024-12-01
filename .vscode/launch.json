@@ -8,7 +8,7 @@
             "name": "CUDA C++: Launch",
             "type": "cuda-gdb",
             "request": "launch",
-            "program": "${workspaceFolder}/src/test/simple_gemm_test"
+            "program": "${workspaceFolder}/src/test/gemm_cuda_test"
         },
         {
             "name": "CUDA C++: Attach",

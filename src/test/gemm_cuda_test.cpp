@@ -103,6 +103,22 @@ class GemmCudaTest : public ::testing::Test {
         // Compare results
         compareMatrices(h_C_cuda.data(), h_C_cpu.data(), sizeC);
 
+        std::cout << "cuda:\n";
+        for (int y = 0; y < k; ++y) {
+            for (int x = 0; x < n; ++x) {
+                std::cout << h_C_cuda[y * n + x] << " ";
+            }
+            std::cout << "\n";
+        }
+
+        std::cout << "cpu:\n";
+        for (int y = 0; y < k; ++y) {
+            for (int x = 0; x < n; ++x) {
+                std::cout << h_C_cpu[y * n + x] << " ";
+            }
+            std::cout << "\n";
+        }
+
         // Free device memory
         cudaFree(d_A);
         cudaFree(d_B);
@@ -111,29 +127,53 @@ class GemmCudaTest : public ::testing::Test {
     }
 };
 
-TEST_F(GemmCudaTest, SmallMatrixNoTranspose) {
+TEST_F(GemmCudaTest, OneByOneMatrixNoTranspose) {
+    runGemmTest(1, 1, 1, false, false, 1.0f, 1.0f);
+}
+
+TEST_F(GemmCudaTest, TwoByTwoMatrixNoTranspose) {
+    runGemmTest(2, 2, 2, false, false, 1.0f, 1.0f);
+}
+
+TEST_F(GemmCudaTest, FourByFourMatrixNoTranspose) {
+    runGemmTest(4, 4, 4, false, false, 1.0f, 1.0f);
+}
+
+TEST_F(GemmCudaTest, FiveByFiveMatrixNoTranspose) {
+    runGemmTest(5, 5, 5, false, false, 1.0f, 1.0f);
+}
+
+TEST_F(GemmCudaTest, SmallerMatrixNoTranspose) {
     runGemmTest(16, 16, 16, false, false, 1.0f, 1.0f);
 }
 
-// TEST_F(GemmCudaTest, MediumMatrixWithTransA) {
-//     runGemmTest(32, 64, 48, true, false, 1.0f, 1.0f);
-// }
+TEST_F(GemmCudaTest, SmallMatrixNoTranspose) {
+    runGemmTest(32, 32, 32, false, false, 1.0f, 1.0f);
+}
+
+TEST_F(GemmCudaTest, SmallNonSquareNoTrans) {
+    runGemmTest(2, 4, 8, false, false, 1.0f, 1.0f);
+}
+
+TEST_F(GemmCudaTest, MediumNonSquareNoTrans) {
+    runGemmTest(31, 15, 43, false, false, 1.0f, 1.0f);
+}
 
 TEST_F(GemmCudaTest, MediumSquare) {
     runGemmTest(64, 64, 64, false, false, 1.0f, 1.0f);
 }
 
-TEST_F(GemmCudaTest, LargeSquare) {
+TEST_F(GemmCudaTest, LargeSquareNoTrans) {
+    runGemmTest(65, 65, 65, false, false, 1.0f, 1.0f);
+}
+
+TEST_F(GemmCudaTest, LargerSquareNoTrans) {
     runGemmTest(128, 128, 128, false, false, 1.0f, 1.0f);
 }
 
-// TEST_F(GemmCudaTest, LargeMatrixTransB) {
-//     runGemmTest(128, 256, 128, false, true, 1.0f, 1.0f);
-// }
-
-// TEST_F(GemmCudaTest, NonSquareMatrix) {
-//     runGemmTest(6, 4, 2, false, false, 1.0f, 1.0f);
-// }
+TEST_F(GemmCudaTest, NonSquareMatrix) {
+    runGemmTest(6, 4, 2, false, false, 1.0f, 1.0f);
+}
 
 // TEST_F(GemmCudaTest, NonSquareMatrixTransA) {
 //     runGemmTest(100, 50, 75, true, false, 1.0f, 1.0f);
