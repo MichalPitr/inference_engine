@@ -92,9 +92,9 @@ static void BM_GEMM(benchmark::State& state) {
 
 // Define the benchmark
 BENCHMARK(BM_GEMM)
-    // ->Args({4092, 4092, 4092, 0})  // n, m, k, (0 for naive)
-    // ->Args({4092, 4092, 4092, 1})  // n, m, k, (1 for tiled)
-    // ->Args({4092, 4092, 4092, 2})  // n, m, k, (2 for tiled_1D)
+    ->Args({4092, 4092, 4092, 0})  // n, m, k, (0 for naive)
+    ->Args({4092, 4092, 4092, 1})  // n, m, k, (1 for tiled)
+    ->Args({4092, 4092, 4092, 2})  // n, m, k, (2 for tiled_1D)
     ->Args({4092, 4092, 4092, 3})  // n, m, k, (3 for 1D block tiling)
     ->Unit(benchmark::kMillisecond)
     ->UseManualTime();

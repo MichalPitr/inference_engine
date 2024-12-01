@@ -1,6 +1,7 @@
 #include <cuda_runtime.h>
 
 #include <iostream>
+#include <stdexcept>
 
 #define BLOCK_SIZE 16
 #define TILE_SIZE 16
@@ -150,27 +151,30 @@ __global__ void gemm_kernel_tiled_1D(const float *A, const float *B,
 
 /** Difference from simple tiled approach:
 
+   This implementation only handles non-transposed matrices as indicated by the
+   _nn suffix.
+
     1. Tiles are not (BLOCKSIZE, BLOCKSIZE), but rather (BN, BM) and (BM,
    BK). Important is that each thread has to process (BN*BK) / ((BN*BM +
    BM+BK)/2) = (2*BN*BK)/(BN*BM + BM+BK) results. So then supposing we use
    (64, 8), (8, 64), we get 2*64*64 / (16*64) = 8.
 
-    2. Each thread still only loads one value, but then computes multiple
-   outputs. The computation of outputs is done in a way to avoid redundant
-   shared memory loads. In practice, this is a mostly pedagogical exercise
-   as the compiler will optimize redundant loads away.
+    2. Each thread still only loads one value, but then computes TM
+   outputs. Each thread calculates an (TM,1) vector of C as a column. So thread
+   (0,0,0) will calculate C[0][0], C[1][0], ... C[TM][0].
 
     Tensors are of shape:
         A: (n, m)
         B: (m, k)
         C: (n, k)
+        bias: (1, k)
 */
 template <const int BN, const int BM, const int BK, const int TM>
-__global__ void gemm_kernel_tiled_1D_blocktiling(const float *A, const float *B,
-                                                 const float *bias, float *C,
-                                                 int N, int M, int K,
-                                                 bool transA, bool transB,
-                                                 float alpha, float beta) {
+__global__ void gemm_kernel_tiled_1D_blocktiling_nn(const float *A,
+                                                    const float *B,
+                                                    const float *bias, float *C,
+                                                    int N, int M, int K,
+                                                    float alpha, float beta) {
     __shared__ float As[BN][BM];  // 64, 8
     __shared__ float Bs[BM][BK];  // 8, 64
 
@@ -202,11 +206,6 @@ __global__ void gemm_kernel_tiled_1D_blocktiling(const float *A, const float *B,
     // we index into a row, we'll automatically skip the first offset columns.
     const uint B_baseoffset = bx * BK;
 
-    // Similarly, we need offset into C.
-    // We skip rows similarly like for A and then add offset for proper columns
-    // similarly like in B.
-    const uint C_baseoffset = by * BN * K + bx * BK;
-
     // Each thread calculates TM results.
     float threadResults[TM] = {0.0};
 
@@ -221,10 +220,6 @@ __global__ void gemm_kernel_tiled_1D_blocktiling(const float *A, const float *B,
         const bool validColA = (blockTileOffset + innerColA) < M;
         const uint A_idx =
             A_baseoffset + blockTileOffset + innerRowA * M + innerColA;
-        printf(
-            "A_idx=%d, A_baseoffset=%d, blockTileOffset=%d, innerRowA=%d, "
-            "M=%d, innerColA=%d\n",
-            A_idx, A_baseoffset, blockTileOffset, innerRowA, M, innerColA);
         if (validRowA && validColA && A_idx < N * M) {
             As[innerRowA][innerColA] = A[A_idx];
         } else {
@@ -266,73 +261,86 @@ __global__ void gemm_kernel_tiled_1D_blocktiling(const float *A, const float *B,
     }
 }
 
-template <const int BM, const int BN, const int BK, const int TM>
-__global__ void sgemm1DBlocktiling(int M, int N, int K, float alpha,
-                                   const float *A, const float *B, float beta,
-                                   float *C) {
-    // If we flip x and y here we get ~30% less performance for large matrices.
-    // The current, 30% faster configuration ensures that blocks with sequential
-    // blockIDs access columns of B sequentially, while sharing the same row of
-    // A. The slower configuration would share columns of A, but access into B
-    // would be non-sequential. So the faster configuration has better spatial
-    // locality and hence a greater L2 hit rate.
-    const uint cRow = blockIdx.y;
-    const uint cCol = blockIdx.x;
+template <const int BN, const int BM, const int BK, const int TM>
+__global__ void gemm_kernel_tiled_1D_blocktiling_nt(const float *A,
+                                                    const float *B,
+                                                    const float *bias, float *C,
+                                                    int N, int M, int K,
+                                                    float alpha, float beta) {
+    __shared__ float As[BN][BM];  // 64, 8
+    __shared__ float Bs[BM][BK];  // 8, 64
 
-    // each warp will calculate 32*TM elements, with 32 being the columnar dim.
-    const int threadCol = threadIdx.x % BN;
-    const int threadRow = threadIdx.x / BN;
+    // Block coordinates remain the same
+    uint bx = blockIdx.x;  // (0 - K div BK)
+    uint by = blockIdx.y;  // (0 - N div BN)
 
-    // allocate space for the current blocktile in SMEM
-    __shared__ float As[BM * BK];
-    __shared__ float Bs[BK * BN];
+    const uint threadCol = threadIdx.x % BK;
+    const uint threadRow = threadIdx.x / BK;
 
-    // Move blocktile to beginning of A's row and B's column
-    A += cRow * BM * K;
-    B += cCol * BN;
-    C += cRow * BM * N + cCol * BN;
-
-    // todo: adjust this to each thread to load multiple entries and
-    // better exploit the cache sizes
+    assert(BN * BM == blockDim.x);
     assert(BM * BK == blockDim.x);
-    assert(BN * BK == blockDim.x);
-    const uint innerColA = threadIdx.x % BK;  // warp-level GMEM coalescing
-    const uint innerRowA = threadIdx.x / BK;
-    const uint innerColB = threadIdx.x % BN;  // warp-level GMEM coalescing
-    const uint innerRowB = threadIdx.x / BN;
+    const uint innerColA = threadIdx.x % BM;
+    const uint innerRowA = threadIdx.x / BM;
+    const uint innerColB = threadIdx.x % BK;
+    const uint innerRowB = threadIdx.x / BK;
 
-    // allocate thread-local cache for results in registerfile
+    // A's loading pattern remains the same
+    const uint A_baseoffset = by * BN * M;
+
+    // B's base offset changes since B is transposed
+    // Instead of columns, we're now skipping rows in the transposed matrix
+    const uint B_baseoffset =
+        bx * BK * M;  // Note: multiplied by M instead of 1
+
     float threadResults[TM] = {0.0};
 
-    // outer loop over block tiles
-    for (uint bkIdx = 0; bkIdx < K; bkIdx += BK) {
-        // populate the SMEM caches
-        As[innerRowA * BK + innerColA] = A[innerRowA * K + innerColA];
-        Bs[innerRowB * BN + innerColB] = B[innerRowB * N + innerColB];
+    for (uint blockTileOffset = 0; blockTileOffset < M; blockTileOffset += BM) {
+        // A loading remains identical
+        const bool validRowA = (by * BN + innerRowA) < N;
+        const bool validColA = (blockTileOffset + innerColA) < M;
+        const uint A_idx =
+            A_baseoffset + blockTileOffset + innerRowA * M + innerColA;
+        if (validRowA && validColA && A_idx < N * M) {
+            As[innerRowA][innerColA] = A[A_idx];
+        } else {
+            As[innerRowA][innerColA] = 0;
+        }
+
+        // B loading pattern changes for transposed case
+        const bool validRowB = (blockTileOffset + innerRowB) < M;
+        const bool validColB = (bx * BK + innerColB) < K;
+        // Key change: For transposed B, we access it as B[k][m] instead of
+        // B[m][k]
+        const uint B_idx =
+            B_baseoffset + blockTileOffset + innerColB * M + innerRowB;
+        if (validRowB && validColB && B_idx < M * K) {
+            Bs[innerRowB][innerColB] = B[B_idx];
+        } else {
+            Bs[innerRowB][innerColB] = 0;
+        }
+
         __syncthreads();
 
-        // advance blocktile
-        A += BK;
-        B += BK * N;
-
-        // calculate per-thread results
-        for (uint dotIdx = 0; dotIdx < BK; ++dotIdx) {
-            // we make the dotproduct loop the outside loop, which facilitates
-            // reuse of the Bs entry, which we can cache in a tmp var.
-            float tmpB = Bs[dotIdx * BN + threadCol];
-            for (uint resIdx = 0; resIdx < TM; ++resIdx) {
+        // The multiplication logic remains identical since we've loaded
+        // the data into shared memory in the same format
+        for (uint resIdx = 0; resIdx < TM; ++resIdx) {
+            for (uint dotIdx = 0; dotIdx < BM; ++dotIdx) {
                 threadResults[resIdx] +=
-                    As[(threadRow * TM + resIdx) * BK + dotIdx] * tmpB;
+                    As[threadRow * TM + resIdx][dotIdx] * Bs[dotIdx][threadCol];
             }
         }
         __syncthreads();
     }
 
-    // write out the results
+    // Result writing remains the same
     for (uint resIdx = 0; resIdx < TM; ++resIdx) {
-        C[(threadRow * TM + resIdx) * N + threadCol] =
-            alpha * threadResults[resIdx] +
-            beta * C[(threadRow * TM + resIdx) * N + threadCol];
+        const uint rowC = by * BN + threadRow * TM + resIdx;
+        const uint colC = bx * BK + threadCol;
+
+        if (rowC < N && colC < K) {
+            C[rowC * K + colC] =
+                alpha * threadResults[resIdx] + beta * bias[colC];
+        }
     }
 }
 
@@ -368,8 +376,18 @@ void gemm_tiled_1D_blocktiling(const float *A, const float *B,
     const uint TM{8};
     dim3 gridDim(CEIL_DIV(k, BK), CEIL_DIV(n, BN));
     dim3 blockDim((BN * BK) / TM);
-    gemm_kernel_tiled_1D_blocktiling<BN, BM, BK, TM><<<gridDim, blockDim>>>(
-        A, B, bias, out, n, m, k, transA, transB, alpha, beta);
+    if (!transA && !transB) {
+        gemm_kernel_tiled_1D_blocktiling_nn<BN, BM, BK, TM>
+            <<<gridDim, blockDim>>>(A, B, bias, out, n, m, k, alpha, beta);
+    } else if (!transA && transB) {
+        gemm_kernel_tiled_1D_blocktiling_nt<BN, BM, BK, TM>
+            <<<gridDim, blockDim>>>(A, B, bias, out, n, m, k, alpha, beta);
+    }
+
+    else {
+        throw std::runtime_error(
+            "Only NN, NT blocktiling kernels are implemented.");
+    }
 }
 
 void gemm_cuda_naive(const float *A, const float *B, const float *bias,

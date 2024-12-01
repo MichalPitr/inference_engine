@@ -6,6 +6,14 @@
 
 #include "../kernels.h"
 
+#define TEST_GEMM(test_name, n, m, k)                   \
+    TEST_F(GemmCudaTest, test_name##_NoTranspose) {     \
+        runGemmTest(n, m, k, false, false, 1.0f, 1.0f); \
+    }                                                   \
+    TEST_F(GemmCudaTest, test_name##_TransposeB) {      \
+        runGemmTest(n, m, k, false, true, 1.0f, 1.0f);  \
+    }
+
 // Helper function to initialize a matrix with random values
 void initializeRandomMatrix(float* matrix, int rows, int cols) {
     std::random_device rd;
@@ -103,21 +111,21 @@ class GemmCudaTest : public ::testing::Test {
         // Compare results
         compareMatrices(h_C_cuda.data(), h_C_cpu.data(), sizeC);
 
-        std::cout << "cuda:\n";
-        for (int y = 0; y < k; ++y) {
-            for (int x = 0; x < n; ++x) {
-                std::cout << h_C_cuda[y * n + x] << " ";
-            }
-            std::cout << "\n";
-        }
+        // std::cout << "cuda:\n";
+        // for (int y = 0; y < k; ++y) {
+        //     for (int x = 0; x < n; ++x) {
+        //         std::cout << h_C_cuda[y * n + x] << " ";
+        //     }
+        //     std::cout << "\n";
+        // }
 
-        std::cout << "cpu:\n";
-        for (int y = 0; y < k; ++y) {
-            for (int x = 0; x < n; ++x) {
-                std::cout << h_C_cpu[y * n + x] << " ";
-            }
-            std::cout << "\n";
-        }
+        // std::cout << "cpu:\n";
+        // for (int y = 0; y < k; ++y) {
+        //     for (int x = 0; x < n; ++x) {
+        //         std::cout << h_C_cpu[y * n + x] << " ";
+        //     }
+        //     std::cout << "\n";
+        // }
 
         // Free device memory
         cudaFree(d_A);
@@ -126,62 +134,20 @@ class GemmCudaTest : public ::testing::Test {
         cudaFree(d_C);
     }
 };
-
-TEST_F(GemmCudaTest, OneByOneMatrixNoTranspose) {
-    runGemmTest(1, 1, 1, false, false, 1.0f, 1.0f);
-}
-
-TEST_F(GemmCudaTest, TwoByTwoMatrixNoTranspose) {
-    runGemmTest(2, 2, 2, false, false, 1.0f, 1.0f);
-}
-
-TEST_F(GemmCudaTest, FourByFourMatrixNoTranspose) {
-    runGemmTest(4, 4, 4, false, false, 1.0f, 1.0f);
-}
-
-TEST_F(GemmCudaTest, FiveByFiveMatrixNoTranspose) {
-    runGemmTest(5, 5, 5, false, false, 1.0f, 1.0f);
-}
-
-TEST_F(GemmCudaTest, SmallerMatrixNoTranspose) {
-    runGemmTest(16, 16, 16, false, false, 1.0f, 1.0f);
-}
-
-TEST_F(GemmCudaTest, SmallMatrixNoTranspose) {
-    runGemmTest(32, 32, 32, false, false, 1.0f, 1.0f);
-}
-
-TEST_F(GemmCudaTest, SmallNonSquareNoTrans) {
-    runGemmTest(2, 4, 8, false, false, 1.0f, 1.0f);
-}
-
-TEST_F(GemmCudaTest, MediumNonSquareNoTrans) {
-    runGemmTest(31, 15, 43, false, false, 1.0f, 1.0f);
-}
-
-TEST_F(GemmCudaTest, MediumSquare) {
-    runGemmTest(64, 64, 64, false, false, 1.0f, 1.0f);
-}
-
-TEST_F(GemmCudaTest, LargeSquareNoTrans) {
-    runGemmTest(65, 65, 65, false, false, 1.0f, 1.0f);
-}
-
-TEST_F(GemmCudaTest, LargerSquareNoTrans) {
-    runGemmTest(128, 128, 128, false, false, 1.0f, 1.0f);
-}
-
-TEST_F(GemmCudaTest, NonSquareMatrix) {
-    runGemmTest(6, 4, 2, false, false, 1.0f, 1.0f);
-}
-
-// TEST_F(GemmCudaTest, NonSquareMatrixTransA) {
-//     runGemmTest(100, 50, 75, true, false, 1.0f, 1.0f);
-// }
-
-// TEST_F(GemmCudaTest, NonSquareMatrixTransB) {
-//     runGemmTest(100, 50, 75, false, true, 1.0f, 1.0f);
-// }
+TEST_GEMM(OneSquare, 1, 1, 1)
+TEST_GEMM(TwoSquare, 2, 2, 2)
+TEST_GEMM(FourSquare, 4, 4, 4)
+TEST_GEMM(FiveSquare, 5, 5, 5)
+TEST_GEMM(SixteenSquare, 16, 16, 16)
+TEST_GEMM(ThirtyTwoSquare, 32, 32, 32)
+TEST_GEMM(SixtyFourSquare, 64, 64, 64)
+TEST_GEMM(LargeSquare, 65, 65, 65)
+TEST_GEMM(LargerSquare, 128, 128, 128)
+TEST_GEMM(BigSquare, 1028, 1028, 1028)
+TEST_GEMM(SmallNonSquare, 2, 4, 8)
+TEST_GEMM(MediumNonSquare, 31, 15, 43)
+TEST_GEMM(NonSquare, 6, 4, 2)
+TEST_GEMM(BigNonSquare, 333, 1027, 717)
 
 int main(int argc, char** argv) {
     ::testing::InitGoogleTest(&argc, argv);
