@@ -4,11 +4,14 @@
             "name": "Linux",
             "includePath": [
                 "${workspaceFolder}/**",
-                "/usr/local/cuda-12.4/targets/x86_64-linux/include"
+                "/usr/local/cuda-12.6/targets/x86_64-linux/include"
             ],
             "defines": [],
             "cStandard": "c17",
-            "intelliSenseMode": "linux-clang-x64"
+            "intelliSenseMode": "linux-clang-x64",
+            "compilerPath": "/usr/bin/clang++",
+            "cppStandard": "c++20",
+            "configurationProvider": "ms-vscode.cmake-tools"
         }
     ],
     "version": 4

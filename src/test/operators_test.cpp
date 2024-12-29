@@ -4,7 +4,9 @@
 #include "gtest/gtest.h"
 
 TEST(OperatorsTest, flatten) {
-    Tensor<float> t1{{1, 2, 3, 4, 5, 6, 7, 8}, {1, 1, 2, 4}};
+    const float data[] = {1, 2, 3, 4, 5, 6, 7, 8};
+    std::vector<size_t> shape = {1, 1, 2, 4};
+    Tensor<float> t1(data, shape);
 
     Tensor<float> t2 = CpuOperators<float>::flatten(t1, uint64_t{0});
     std::vector<uint64_t> expectedShape1{1, 8};
@@ -24,7 +26,9 @@ TEST(OperatorsTest, flatten) {
 }
 
 TEST(OperatorsTest, relu) {
-    Tensor<float> t1{{-1., 0, 1, -1, 1, -0.5, -0, 0.5}, {2, 4}};
+    const float data1[] = {-1.0f, 0, 1, -1, 1, -0.5f, -0, 0.5f};
+    std::vector<size_t> shape1 = {2, 4};
+    Tensor<float> t1(data1, shape1);
     auto t2 = CpuOperators<float>::relu(t1);
     std::vector<float> expected{0, 0, 1, 0, 1, 0, 0, 0.5};
 
@@ -32,7 +36,10 @@ TEST(OperatorsTest, relu) {
         EXPECT_EQ(t2.data()[i], expected[i]);
     }
 
-    Tensor<float> t3{{1, 1, 1, 1}, {2, 2}};
+    const float data2[] = {1, 1, 1, 1};
+    std::vector<size_t> shape2 = {2, 2};
+    Tensor<float> t3(data2, shape2);
+
     auto t4 = CpuOperators<float>::relu(t3);
     std::vector<float> expected2{1, 1, 1, 1};
     for (std::size_t i = 0; i < t4.size(); ++i) {
@@ -41,9 +48,17 @@ TEST(OperatorsTest, relu) {
 }
 
 TEST(OperatorsTest, gemmMatrixVector) {
-    Tensor<float> A{{1, 2, 3, 4}, {2, 2}};
-    Tensor<float> B{{1, 1}, {2, 1}};
-    Tensor<float> bias{{1, 1}, {2, 1}};
+    const float dataA[] = {1, 2, 3, 4};
+    std::vector<size_t> shapeA = {2, 2};
+    Tensor<float> A(dataA, shapeA);
+
+    const float dataB[] = {1, 1};
+    std::vector<size_t> shapeB = {2, 1};
+    Tensor<float> B(dataB, shapeB);
+
+    const float dataBias[] = {1, 1};
+    std::vector<size_t> shapeBias = {2, 1};
+    Tensor<float> bias(dataBias, shapeBias);
 
     auto res = CpuOperators<float>::gemm(A, B, bias, false, false, 1, 1);
 
@@ -56,9 +71,17 @@ TEST(OperatorsTest, gemmMatrixVector) {
 }
 
 TEST(OperatorsTest, gemmMatrixMatrix) {
-    Tensor<float> A{{1, 2, 3, 4}, {2, 2}};
-    Tensor<float> B{{1, 1, 1, 1}, {2, 2}};
-    Tensor<float> bias{{1, 2}, {2, 1}};
+    const float dataA[] = {1, 2, 3, 4};
+    std::vector<size_t> shapeA = {2, 2};
+    Tensor<float> A(dataA, shapeA);
+
+    const float dataB[] = {1, 1, 1, 1};
+    std::vector<size_t> shapeB = {2, 2};
+    Tensor<float> B(dataB, shapeB);
+
+    const float dataBias[] = {1, 2};
+    std::vector<size_t> shapeBias = {2, 1};
+    Tensor<float> bias(dataBias, shapeBias);
 
     auto res = CpuOperators<float>::gemm(A, B, bias, false, false, 1, 1);
 
@@ -72,9 +95,17 @@ TEST(OperatorsTest, gemmMatrixMatrix) {
 }
 
 TEST(OperatorsTest, gemmMatrixMatrixTransA) {
-    Tensor<float> A{{1, 2}, {2, 1}};
-    Tensor<float> B{{1, 1, 1, 1}, {2, 2}};
-    Tensor<float> bias{{0, 0}, {2}};
+    const float dataA[] = {1, 2};
+    std::vector<size_t> shapeA = {2, 1};
+    Tensor<float> A(dataA, shapeA);
+
+    const float dataB[] = {1, 1, 1, 1};
+    std::vector<size_t> shapeB = {2, 2};
+    Tensor<float> B(dataB, shapeB);
+
+    const float dataBias[] = {0, 0};
+    std::vector<size_t> shapeBias = {2};
+    Tensor<float> bias(dataBias, shapeBias);
 
     auto res = CpuOperators<float>::gemm(A, B, bias, true, false, 1, 1);
 
@@ -88,9 +119,17 @@ TEST(OperatorsTest, gemmMatrixMatrixTransA) {
 }
 
 TEST(OperatorsTest, gemmMatrixMatrixTransB) {
-    Tensor<float> A{{1, 1, 1, 1}, {2, 2}};
-    Tensor<float> B{{1, 2}, {1, 2}};
-    Tensor<float> bias{{0, 0}, {2}};
+    const float dataA[] = {1, 1, 1, 1};
+    std::vector<size_t> shapeA = {2, 2};
+    Tensor<float> A(dataA, shapeA);
+
+    const float dataB[] = {1, 2};
+    std::vector<size_t> shapeB = {1, 2};
+    Tensor<float> B(dataB, shapeB);
+
+    const float dataBias[] = {0, 0};
+    std::vector<size_t> shapeBias = {2};
+    Tensor<float> bias(dataBias, shapeBias);
 
     auto res = CpuOperators<float>::gemm(A, B, bias, false, true, 1, 1);
 

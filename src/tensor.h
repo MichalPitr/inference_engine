@@ -14,7 +14,6 @@ template <typename T>
 class Tensor {
    public:
     // Constructor with shape and optional allocator
-    // Constructor with shape and optional allocator
     Tensor(const std::vector<size_t>& shape,
            std::shared_ptr<Allocator> alloc = std::make_shared<CpuAllocator>());
 

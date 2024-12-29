@@ -74,7 +74,10 @@
         "__tree": "cpp",
         "locale": "cpp",
         "__split_buffer": "cpp",
-        "__locale": "cpp"
+        "__locale": "cpp",
+        "charconv": "cpp",
+        "format": "cpp",
+        "valarray": "cpp"
     },
     "cmake.debugConfig": {
         "args": [

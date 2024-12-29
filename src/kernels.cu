@@ -1,10 +1,10 @@
 #include <cuda_runtime.h>
 
+#include <cassert>
 #include <iostream>
 #include <stdexcept>
 
-#define BLOCK_SIZE 16
-#define TILE_SIZE 16
+const std::size_t BLOCK_SIZE{16};
 
 #define CEIL_DIV(M, N) (((M) + (N) - 1) / (N))
 
