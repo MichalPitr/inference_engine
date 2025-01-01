@@ -50,7 +50,7 @@ int main(int argc, char** argv) {
     std::cout << "initialize_provider took: " << duration.count()
               << " microseconds" << std::endl;
 
-    std::string file = "/home/michal/code/inference_engine/inputs/image_";
+    std::string file = "./inputs/image_";
 
     // Preload all inputs into memory
     int loops{100};

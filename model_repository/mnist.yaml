@@ -1,4 +1,4 @@
-model_path: /home/michal/code/inference_engine/models/mnist_ffn_complex.onnx
+model_path: ./models/mnist_ffn_complex.onnx
 model_format: onnx
 execution_provider: CUDA
 batch_size: 32
