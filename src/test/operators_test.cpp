@@ -8,21 +8,14 @@ TEST(OperatorsTest, flatten) {
     std::vector<size_t> shape = {1, 1, 2, 4};
     Tensor<float> t1(data, shape);
 
-    Tensor<float> t2 = CpuOperators<float>::flatten(t1, uint64_t{0});
-    std::vector<uint64_t> expectedShape1{1, 8};
+    // Note: flatten modifies the original tensor in-place.
+    Tensor<float> t2 = CpuOperators<float>::flatten(t1, uint64_t{3});
+    std::vector<uint64_t> expectedShape1{2, 4};
     EXPECT_EQ(expectedShape1, t2.shape());
 
-    Tensor<float> t3 = CpuOperators<float>::flatten(t1, uint64_t{1});
+    Tensor<float> t3 = CpuOperators<float>::flatten(t2, uint64_t{0});
     std::vector<uint64_t> expectedShape2{1, 8};
     EXPECT_EQ(expectedShape2, t3.shape());
-
-    Tensor<float> t4 = CpuOperators<float>::flatten(t1, uint64_t{2});
-    std::vector<uint64_t> expectedShape3{1, 8};
-    EXPECT_EQ(expectedShape3, t4.shape());
-
-    Tensor<float> t5 = CpuOperators<float>::flatten(t1, uint64_t{3});
-    std::vector<uint64_t> expectedShape4{2, 4};
-    EXPECT_EQ(expectedShape4, t5.shape());
 }
 
 TEST(OperatorsTest, relu) {

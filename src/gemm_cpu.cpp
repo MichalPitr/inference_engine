@@ -25,7 +25,7 @@ void gemm_cpu(const float* A, const float* B, const float* bias, float* out,
     // Apply bias term
     for (int r = 0; r < n; ++r) {
         for (int c = 0; c < k; ++c) {
-            out[r * k + c] += bias[c] * beta;
+            out[r * k + c] += bias[r] * beta;
         }
     }
 }
