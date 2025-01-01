@@ -21,6 +21,11 @@ RUN apt-get update && apt-get install -y \
     libbenchmark-dev \
     libgtest-dev \
     libyaml-cpp-dev \
+    clang \
+    clang-format \
+    clang-tidy \
+    libc++-dev \
+    libc++abi-dev \
     python3 \
     python3-pip \
     && rm -rf /var/lib/apt/lists/*
@@ -28,6 +33,10 @@ RUN apt-get update && apt-get install -y \
 # Set environment variables for CUDA
 ENV PATH=/usr/local/cuda/bin:${PATH}
 ENV LD_LIBRARY_PATH=/usr/local/cuda/lib64:${LD_LIBRARY_PATH}
+
+# Set clang as the default C/C++ compiler
+ENV CC=clang
+ENV CXX=clang++
 
 WORKDIR /code
 
